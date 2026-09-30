@@ -12,47 +12,90 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Filtrar questões com risco de indução a erro
+      - name: Selecionar 6000 questões de maior confiança
         run: |
           python - <<'PY'
-          import json,re
+          import json,re,collections
           from pathlib import Path
           p=Path('questoes.json')
           data=json.loads(p.read_text(encoding='utf-8'))
           old=data['questions']
-          # Prioridade máxima: itens que já existem no material e extrações literais.
-          allowed={'original_material_question','literal_pdf_extraction'}
-          meta=re.compile(r'\b(coment[áa]rio|gabarito|resposta\s*[:\-]|professor)\b',re.I)
+          TARGET=6000
+          meta=re.compile(r'\b(coment[áa]rio|gabarito|resposta\s*[:\-]|professor|aula\s+\d+|página\s+\d+)\b',re.I)
           visual=re.compile(r'\b(figura|gráfico|tabela|imagem|texto acima|quadro acima|dados acima|informações acima|assertivas? acima)\b',re.I)
-          kept=[]; rejected=[]
-          for q in old:
+          broken=re.compile(r'(^|\s)[A-E]\)\s*$|\.{4,}|\b(?:CORRETO|ERRADO)\s*$',re.I)
+          type_score={
+            'original_material_question':100,
+            'literal_pdf_extraction':96,
+            'strict_explanation_extraction':86,
+            'validated_explanation_statement':84,
+            'validated_pdf_theory_statement':78,
+          }
+          candidates=[]; rejected=[]
+          seen=set()
+          for pos,q in enumerate(old):
               reasons=[]
-              typ=q.get('derived_type','')
-              text=str(q.get('q','')).strip()
+              text=' '.join(str(q.get('q','')).split())
               opts=q.get('o') or []
               ans=str(q.get('r','')).strip()
-              if typ not in allowed: reasons.append('derivação teórica automática')
-              if len(text)<45: reasons.append('enunciado curto/incompleto')
+              typ=q.get('derived_type','')
+              if typ not in type_score: reasons.append('tipo sem nível de confiança definido')
+              if len(text)<55: reasons.append('enunciado curto/incompleto')
               if len(text)>1200: reasons.append('enunciado excessivo')
               if not 2 <= len(opts) <= 5: reasons.append('alternativas corrompidas')
-              valid_answers=[chr(65+i) for i in range(len(opts))]
-              if ans not in valid_answers: reasons.append('gabarito incompatível')
-              if meta.search(text): reasons.append('metatexto de material')
+              if ans not in [chr(65+i) for i in range(len(opts))]: reasons.append('gabarito incompatível')
+              if meta.search(text): reasons.append('metatexto')
               if visual.search(text): reasons.append('dependência de elemento ausente')
+              if broken.search(text): reasons.append('fragmento/truncamento')
               if not q.get('source_package') or not q.get('source_pdf'): reasons.append('sem rastreabilidade')
-              if reasons: rejected.append({'id':q.get('id'),'reasons':reasons})
-              else: kept.append(q)
-          assert len(kept)>=1800, f'Banco ficou pequeno demais: {len(kept)}'
-          assert all(q.get('source_package') and q.get('source_pdf') for q in kept)
-          # Evita viés artificial de gabarito e mantém o formato real encontrado nos materiais.
+              norm=re.sub(r'\W+',' ',text.lower()).strip()
+              if norm in seen: reasons.append('duplicata textual')
+              if reasons:
+                  rejected.append({'id':q.get('id'),'reasons':reasons})
+                  continue
+              seen.add(norm)
+              score=type_score[typ]
+              # Premia itens com explicação útil e contexto de prova; não altera o conteúdo.
+              expl=' '.join(str(q.get('e','')).split())
+              if 80 <= len(expl) <= 1500: score+=5
+              if re.search(r'\b(CEBRASPE|CESPE|FCC|FGV|VUNESP|FGV)\b',text,re.I): score+=4
+              if len(text)>=100: score+=2
+              candidates.append((score,-pos,q))
+          if len(candidates)<TARGET:
+              raise SystemExit(f'Auditoria encontrou apenas {len(candidates)} itens seguros; não completarei 6000 com itens de baixa confiança.')
+          # Preserva cobertura das disciplinas: primeiro reserva até 20% da cota proporcional de cada pacote,
+          # depois completa globalmente pela maior confiança.
+          bypkg=collections.defaultdict(list)
+          for item in candidates: bypkg[item[2]['source_package']].append(item)
+          for v in bypkg.values(): v.sort(reverse=True,key=lambda x:(x[0],x[1]))
+          totalcand=len(candidates); chosen=[]; chosen_ids=set()
+          for pkg,items in sorted(bypkg.items()):
+              quota=max(1,round(TARGET*len(items)/totalcand*0.20))
+              for item in items[:quota]:
+                  q=item[2]; chosen.append(item); chosen_ids.add(q['id'])
+          for item in sorted(candidates,reverse=True,key=lambda x:(x[0],x[1])):
+              if len(chosen)>=TARGET: break
+              q=item[2]
+              if q['id'] not in chosen_ids:
+                  chosen.append(item); chosen_ids.add(q['id'])
+          kept=[x[2] for x in chosen[:TARGET]]
+          assert len(kept)==TARGET
+          assert len({q['id'] for q in kept})==TARGET
           data['questions']=kept
-          data['total']=len(kept)
-          data['bank_version']=30
+          data['total']=TARGET
+          data['bank_version']=31
           data['updated_at']='2026-09-30'
-          data['generation_rule']='Banco conservador v30: mantém somente questões originais do material e extrações literais rastreáveis; remove derivações automáticas, enunciados truncados, alternativas corrompidas, gabaritos incompatíveis, metatexto e itens dependentes de elementos ausentes. Nenhuma questão artificial foi adicionada nesta etapa para priorizar fidelidade ao padrão das provas dos materiais.'
+          data['generation_rule']='Banco v31 de 6.000 itens selecionados por confiança e fidelidade aos materiais: prioridade para questões originais e extrações literais, seguidas de derivações conceituais rastreáveis que passam por filtros de contexto, integridade, metatexto, dependência visual, duplicidade e gabarito. Nenhum item novo é criado nesta etapa; o conteúdo selecionado permanece ligado ao pacote e PDF de origem.'
           p.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-          Path('audit-question-bank-report.json').write_text(json.dumps({'before':len(old),'after':len(kept),'removed':len(rejected),'sample_rejections':rejected[:100]},ensure_ascii=False,indent=2),encoding='utf-8')
-          print(f'ANTES={len(old)} DEPOIS={len(kept)} REMOVIDAS={len(rejected)}')
+          report={
+            'before':len(old),'candidates_after_quality_filters':len(candidates),'after':len(kept),
+            'removed_or_not_selected':len(old)-len(kept),
+            'by_type':dict(collections.Counter(q.get('derived_type') for q in kept)),
+            'by_package':dict(collections.Counter(q.get('source_package') for q in kept)),
+            'sample_rejections':rejected[:100]
+          }
+          Path('audit-question-bank-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
           PY
       - name: Validar banco resultante
         run: |
@@ -60,9 +103,8 @@ jobs:
           import json,collections
           d=json.load(open('questoes.json',encoding='utf-8'))
           qs=d['questions']
-          assert d['total']==len(qs)
-          assert len(qs)>=1800
-          assert len({q['id'] for q in qs})==len(qs)
+          assert d['total']==6000==len(qs)
+          assert len({q['id'] for q in qs})==6000
           assert all(q.get('source_package') and q.get('source_pdf') for q in qs)
           print('Total:',len(qs))
           print('Por tipo:',collections.Counter(q.get('derived_type') for q in qs))
@@ -73,5 +115,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add questoes.json audit-question-bank-report.json
-          git commit -m "Banco v30: remove questões com risco de indução a erro" || exit 0
+          git commit -m "Banco v31: seleciona 6000 questões de maior confiança" || exit 0
           git push
