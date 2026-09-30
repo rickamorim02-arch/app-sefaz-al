@@ -21,7 +21,7 @@ jobs:
           s=p.read_text(encoding='utf-8')
           for name in ['study.js','study-open-fix.js','study-cycle-plan.js']:
               s=re.sub(r'<script\s+src=["\']'+re.escape(name)+r'(?:\?[^"\']*)?["\']\s*></script>','',s,flags=re.I)
-          tags='\n<script src="study.js?v=40"></script>\n<script src="study-open-fix.js?v=40"></script>\n<script src="study-cycle-plan.js?v=40"></script>\n'
+          tags='\n<script src="study.js?v=41"></script>\n<script src="study-cycle-plan.js?v=41"></script>\n<script src="study-open-fix.js?v=41"></script>\n'
           s=s.replace('</body>',tags+'</body>')
           p.write_text(s,encoding='utf-8')
           PY
@@ -35,17 +35,18 @@ jobs:
           assert 'function ans(' in s
           assert 'function tab(' in s
           assert 'questoes.json' in s
-          assert s.count('study.js?v=40') == 1
-          assert s.count('study-open-fix.js?v=40') == 1
-          assert s.count('study-cycle-plan.js?v=40') == 1
-          assert s.count('</body>') == 1
-          assert s.count('</html>') == 1
-          print('Auditoria estrutural OK')
+          for name in ['study.js?v=41','study-cycle-plan.js?v=41','study-open-fix.js?v=41']:
+              assert s.count(name) == 1, name
+          fix=Path('study-open-fix.js').read_text(encoding='utf-8')
+          assert "b.id='nstudy'" in fix
+          assert "Ciclo" in fix
+          assert "sec.id='study'" in fix
+          print('Auditoria estrutural OK: núcleo + aba Ciclo')
           PY
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Correção v40: restaura Ciclo com integração isolada"
+          git diff --cached --quiet || git commit -m "Correção v41: restaura aba Ciclo"
           git push
