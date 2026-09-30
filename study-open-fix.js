@@ -1,28 +1,22 @@
 (function(){
-  const KEY='sefaz-al-study-open-groups-v1';
-  function loadOpen(){try{return JSON.parse(sessionStorage.getItem(KEY)||'[]')}catch(e){return []}}
-  function saveOpen(){
-    const open=[];
-    document.querySelectorAll('#studyList details.studyGroup').forEach((d,i)=>{if(d.open)open.push(i)});
-    sessionStorage.setItem(KEY,JSON.stringify(open));
-  }
-  function restoreOpen(){
-    const open=loadOpen();
-    document.querySelectorAll('#studyList details.studyGroup').forEach((d,i)=>{d.open=open.includes(i)});
-  }
-  function patch(){
-    if(typeof window.studyCycle!=='function'||typeof window.openStudy!=='function')return false;
-    if(window.__studyOpenFix)return true;
-    window.__studyOpenFix=true;
-    const oldCycle=window.studyCycle;
-    window.studyCycle=function(si,li){saveOpen();oldCycle(si,li);requestAnimationFrame(restoreOpen)};
-    const root=document.getElementById('studyList');
-    if(root){
-      root.addEventListener('toggle',function(e){if(e.target&&e.target.matches('details.studyGroup'))saveOpen()},true);
-      const mo=new MutationObserver(()=>requestAnimationFrame(restoreOpen));
-      mo.observe(root,{childList:true});
-    }
-    return true;
-  }
-  let tries=0;const t=setInterval(()=>{tries++;if(patch()||tries>100)clearInterval(t)},50);
+function initCycleTab(){
+ if(document.getElementById('study'))return true;
+ const app=document.querySelector('.app'),nav=app&&app.querySelector('nav');if(!app||!nav)return false;
+ const style=document.createElement('style');style.textContent='.cycleBlock summary{cursor:pointer}.cycleLessons{margin-top:10px}.studyLesson{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;margin:8px 0;padding:12px;border-radius:12px;border:1px solid #24517c;background:#07182e;color:#fff}.studyLesson span{flex:1}.studyLesson small{white-space:nowrap;color:#aabbd0}.studyLesson.s1{border-color:#ffd52e}.studyLesson.s2{border-color:#43e09d;background:#0d3f35}';document.head.appendChild(style);
+ const sec=document.createElement('section');sec.id='study';sec.className='panel hidden';sec.innerHTML='<h2>📚 Ciclo de Estudos</h2><p>Abra um bloco e marque as aulas estudadas. As marcações permanecem nos ciclos seguintes.</p><div id="studyCyclePlan"></div><div id="studyList" style="display:none"></div>';
+ app.insertBefore(sec,nav);
+ const b=document.createElement('button');b.id='nstudy';b.innerHTML='📚<br>Ciclo';
+ b.addEventListener('click',function(){
+   document.querySelectorAll('.app>main,.app>section').forEach(e=>e.classList.add('hidden'));
+   const ff=document.getElementById('feedFilter');if(ff)ff.classList.add('hidden');
+   nav.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+   sec.classList.remove('hidden');b.classList.add('on');
+   if(typeof window.renderStudyCyclePlan==='function')window.renderStudyCyclePlan();
+   window.scrollTo(0,0);
+ });
+ nav.insertBefore(b,nav.lastElementChild);
+ nav.querySelectorAll('button:not(#nstudy)').forEach(x=>x.addEventListener('click',()=>sec.classList.add('hidden')));
+ return true;
+}
+let tries=0,t=setInterval(function(){tries++;if(initCycleTab()||tries>120)clearInterval(t)},50);
 })();
