@@ -1,0 +1,77 @@
+name: Auditar banco SEFAZ-AL
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-question-bank.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Filtrar questões com risco de indução a erro
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          p=Path('questoes.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          old=data['questions']
+          # Prioridade máxima: itens que já existem no material e extrações literais.
+          allowed={'original_material_question','literal_pdf_extraction'}
+          meta=re.compile(r'\b(coment[áa]rio|gabarito|resposta\s*[:\-]|professor)\b',re.I)
+          visual=re.compile(r'\b(figura|gráfico|tabela|imagem|texto acima|quadro acima|dados acima|informações acima|assertivas? acima)\b',re.I)
+          kept=[]; rejected=[]
+          for q in old:
+              reasons=[]
+              typ=q.get('derived_type','')
+              text=str(q.get('q','')).strip()
+              opts=q.get('o') or []
+              ans=str(q.get('r','')).strip()
+              if typ not in allowed: reasons.append('derivação teórica automática')
+              if len(text)<45: reasons.append('enunciado curto/incompleto')
+              if len(text)>1200: reasons.append('enunciado excessivo')
+              if not 2 <= len(opts) <= 5: reasons.append('alternativas corrompidas')
+              valid_answers=[chr(65+i) for i in range(len(opts))]
+              if ans not in valid_answers: reasons.append('gabarito incompatível')
+              if meta.search(text): reasons.append('metatexto de material')
+              if visual.search(text): reasons.append('dependência de elemento ausente')
+              if not q.get('source_package') or not q.get('source_pdf'): reasons.append('sem rastreabilidade')
+              if reasons: rejected.append({'id':q.get('id'),'reasons':reasons})
+              else: kept.append(q)
+          assert len(kept)>=1800, f'Banco ficou pequeno demais: {len(kept)}'
+          assert all(q.get('source_package') and q.get('source_pdf') for q in kept)
+          # Evita viés artificial de gabarito e mantém o formato real encontrado nos materiais.
+          data['questions']=kept
+          data['total']=len(kept)
+          data['bank_version']=30
+          data['updated_at']='2026-09-30'
+          data['generation_rule']='Banco conservador v30: mantém somente questões originais do material e extrações literais rastreáveis; remove derivações automáticas, enunciados truncados, alternativas corrompidas, gabaritos incompatíveis, metatexto e itens dependentes de elementos ausentes. Nenhuma questão artificial foi adicionada nesta etapa para priorizar fidelidade ao padrão das provas dos materiais.'
+          p.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          Path('audit-question-bank-report.json').write_text(json.dumps({'before':len(old),'after':len(kept),'removed':len(rejected),'sample_rejections':rejected[:100]},ensure_ascii=False,indent=2),encoding='utf-8')
+          print(f'ANTES={len(old)} DEPOIS={len(kept)} REMOVIDAS={len(rejected)}')
+          PY
+      - name: Validar banco resultante
+        run: |
+          python - <<'PY'
+          import json,collections
+          d=json.load(open('questoes.json',encoding='utf-8'))
+          qs=d['questions']
+          assert d['total']==len(qs)
+          assert len(qs)>=1800
+          assert len({q['id'] for q in qs})==len(qs)
+          assert all(q.get('source_package') and q.get('source_pdf') for q in qs)
+          print('Total:',len(qs))
+          print('Por tipo:',collections.Counter(q.get('derived_type') for q in qs))
+          print('Por pacote:',collections.Counter(q.get('source_package') for q in qs))
+          PY
+      - name: Publicar banco auditado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add questoes.json audit-question-bank-report.json
+          git commit -m "Banco v30: remove questões com risco de indução a erro" || exit 0
+          git push
