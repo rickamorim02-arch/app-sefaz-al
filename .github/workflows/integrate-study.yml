@@ -1,4 +1,4 @@
-name: Integrar Controle de Estudos
+name: Recuperar aplicativo funcional
 on:
   push:
     branches: [main]
@@ -8,35 +8,19 @@ on:
 permissions:
   contents: write
 jobs:
-  integrate:
+  recover:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrar aba Ciclo diretamente no HTML publicado
+        with:
+          fetch-depth: 0
+      - name: Restaurar index funcional confirmado
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          # painel permanente
-          if 'id="study"' not in s:
-              panel='<section id="study" class="panel hidden"><h2>📚 Ciclo de Estudos</h2><p>Ciclo ponderado pela prova objetiva, densidade do material e P3.</p><div id="studyCyclePlan"></div><div id="studyList" style="display:none"></div></section>'
-              s=s.replace('<section id="stats"',panel+'<section id="stats"')
-          # botão permanente na navegação
-          if 'id="nstudy"' not in s:
-              btn='<button id="nstudy" onclick="tab(\'study\');setTimeout(function(){if(window.renderStudyCyclePlan)window.renderStudyCyclePlan()},0)">📚<br>Ciclo</button>'
-              s=s.replace('<button id="nst"',btn+'<button id="nst"')
-          # scripts, sempre antes de </body>
-          for name in ['study.js','study-open-fix.js','study-cycle-plan.js']:
-              s=re.sub(r'<script src="'+re.escape(name)+r'(?:\?v=\d+)?"></script>','',s)
-          tags=''.join('<script src="%s?v=33"></script>'%n for n in ['study.js','study-open-fix.js','study-cycle-plan.js'])
-          s=s.replace('</body>',tags+'</body>')
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Commit
+          git checkout e1399d3 -- index.html
+      - name: Commit da recuperação
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Correção v33: incorpora aba Ciclo no index.html"
+          git diff --cached --quiet || git commit -m "Recuperação: restaura versão funcional das questões e navegação"
           git push
