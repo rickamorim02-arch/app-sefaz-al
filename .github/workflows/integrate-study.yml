@@ -12,21 +12,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrar study.js diretamente no index
+      - name: Integrar scripts do Controle de Estudos
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          tag='<script src="study.js?v=28"></script>'
+          study='<script src="study.js?v=29"></script>'
+          fix='<script src="study-open-fix.js?v=29"></script>'
+          import re
+          s=re.sub(r'<script src="study\.js\?v=\d+"></script>',study,s)
           if 'study.js' not in s:
-              s=s.replace('</body>', tag+'</body>')
-              p.write_text(s,encoding='utf-8')
+              s=s.replace('</body>',study+'</body>')
+          if 'study-open-fix.js' not in s:
+              s=s.replace('</body>',fix+'</body>')
+          p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Atualização 01: integra Controle de Estudos diretamente no index"
+          git diff --cached --quiet || git commit -m "Correção: mantém lista de aulas aberta ao marcar progresso"
           git push
