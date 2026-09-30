@@ -18,7 +18,7 @@ jobs:
           from pathlib import Path
           import re
           p=Path('index.html');s=p.read_text(encoding='utf-8')
-          tags=[('study.js','30'),('study-open-fix.js','30'),('study-cycle-plan.js','30')]
+          tags=[('study.js','31'),('study-open-fix.js','31'),('study-cycle-plan.js','31')]
           for name,v in tags:
               tag=f'<script src="{name}?v={v}"></script>'
               s=re.sub(r'<script src="'+re.escape(name)+r'\?v=\d+"></script>',tag,s)
@@ -30,5 +30,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Atualização 02: integra ciclo de 22 blocos do cronograma"
+          git diff --cached --quiet || git commit -m "Atualização 03: publica aulas dentro dos blocos com progresso persistente"
           git push
