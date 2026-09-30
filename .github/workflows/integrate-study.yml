@@ -1,4 +1,4 @@
-name: Integrar Ciclo de Estudos
+name: Estabilização final do Ciclo
 on:
   push:
     branches: [main]
@@ -8,45 +8,63 @@ on:
 permissions:
   contents: write
 jobs:
-  integrate:
+  stabilize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrar Ciclo sem alterar o JavaScript principal
+      - name: Integrar Ciclo uma única vez
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
+          # Remove referências antigas, se existirem.
           for name in ['study.js','study-open-fix.js','study-cycle-plan.js']:
               s=re.sub(r'<script\s+src=["\']'+re.escape(name)+r'(?:\?[^"\']*)?["\']\s*></script>','',s,flags=re.I)
-          tags='\n<script src="study.js?v=41"></script>\n<script src="study-cycle-plan.js?v=41"></script>\n<script src="study-open-fix.js?v=41"></script>\n'
-          s=s.replace('</body>',tags+'</body>')
+          tags='\n<script src="study.js?v=50"></script>\n<script src="study-cycle-plan.js?v=50"></script>\n<script src="study-open-fix.js?v=50"></script>\n'
+          # O HTML legado não possui </body>; por isso a integração anterior nunca era inserida.
+          if '</body>' in s.lower():
+              pos=s.lower().rfind('</body>')
+              s=s[:pos]+tags+s[pos:]
+          elif '</html>' in s.lower():
+              pos=s.lower().rfind('</html>')
+              s=s[:pos]+tags+s[pos:]
+          else:
+              s += tags
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Verificações estruturais
+      - name: Auditoria estrutural antes do commit
         run: |
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          assert 'function init()' in s
-          assert 'function render(' in s
-          assert 'function ans(' in s
-          assert 'function tab(' in s
-          assert 'questoes.json' in s
-          for name in ['study.js?v=41','study-cycle-plan.js?v=41','study-open-fix.js?v=41']:
-              assert s.count(name) == 1, name
+          checks={
+            'núcleo init':'function init()' in s,
+            'render de questões':'function render(' in s,
+            'resposta clicável':'function ans(' in s,
+            'navegação':'function tab(' in s,
+            'banco de questões':'questoes.json' in s,
+            'study.js':s.count('<script src="study.js?v=50"></script>')==1,
+            'study-cycle-plan.js':s.count('<script src="study-cycle-plan.js?v=50"></script>')==1,
+            'study-open-fix.js':s.count('<script src="study-open-fix.js?v=50"></script>')==1,
+          }
+          for k,v in checks.items():
+              print(('OK  ' if v else 'FALHA ')+k)
+          assert all(checks.values()), checks
           fix=Path('study-open-fix.js').read_text(encoding='utf-8')
-          assert "b.id='nstudy'" in fix
-          assert "Ciclo" in fix
-          assert "sec.id='study'" in fix
-          print('Auditoria estrutural OK: núcleo + aba Ciclo')
+          cycle=Path('study-cycle-plan.js').read_text(encoding='utf-8')
+          study=Path('study.js').read_text(encoding='utf-8')
+          assert "b.id='nstudy'" in fix and "sec.id='study'" in fix
+          assert 'selectCycleLesson' in cycle and 'completeStudyBlock' in cycle
+          assert 'window.SEFAZ_STUDY' in study
+          print('AUDITORIA OK: questões + cliques + navegação + Ciclo + aulas persistentes')
           PY
-      - name: Commit
+      - name: Tornar integração permanente e remover este workflow
         run: |
+          rm -f .github/workflows/integrate-study.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet || git commit -m "Correção v41: restaura aba Ciclo"
+          git add index.html .github/workflows/integrate-study.yml
+          git commit -m "Estabilização: incorpora Ciclo permanentemente e remove integração automática"
           git push
