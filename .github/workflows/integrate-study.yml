@@ -16,16 +16,13 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          study='<script src="study.js?v=29"></script>'
-          fix='<script src="study-open-fix.js?v=29"></script>'
           import re
-          s=re.sub(r'<script src="study\.js\?v=\d+"></script>',study,s)
-          if 'study.js' not in s:
-              s=s.replace('</body>',study+'</body>')
-          if 'study-open-fix.js' not in s:
-              s=s.replace('</body>',fix+'</body>')
+          p=Path('index.html');s=p.read_text(encoding='utf-8')
+          tags=[('study.js','30'),('study-open-fix.js','30'),('study-cycle-plan.js','30')]
+          for name,v in tags:
+              tag=f'<script src="{name}?v={v}"></script>'
+              s=re.sub(r'<script src="'+re.escape(name)+r'\?v=\d+"></script>',tag,s)
+              if name not in s:s=s.replace('</body>',tag+'</body>')
           p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
@@ -33,5 +30,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Correção: mantém lista de aulas aberta ao marcar progresso"
+          git diff --cached --quiet || git commit -m "Atualização 02: integra ciclo de 22 blocos do cronograma"
           git push
