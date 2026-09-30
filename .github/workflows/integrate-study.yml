@@ -18,7 +18,7 @@ jobs:
           from pathlib import Path
           import re
           p=Path('index.html');s=p.read_text(encoding='utf-8')
-          tags=[('study.js','31'),('study-open-fix.js','31'),('study-cycle-plan.js','31')]
+          tags=[('study.js','32'),('study-open-fix.js','32'),('study-cycle-plan.js','32')]
           for name,v in tags:
               tag=f'<script src="{name}?v={v}"></script>'
               s=re.sub(r'<script src="'+re.escape(name)+r'\?v=\d+"></script>',tag,s)
@@ -30,5 +30,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Atualização 03: publica aulas dentro dos blocos com progresso persistente"
+          git diff --cached --quiet || git commit -m "Correção v32: seleção persistente das aulas do ciclo"
           git push
