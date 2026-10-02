@@ -1,6 +1,6 @@
-const CACHE='sefaz-al-offline-v47';
+const CACHE='sefaz-al-offline-v48';
 const CORE=[
- './','./index.html','./manifest.webmanifest','./questoes.json',
+ './','./index.html','./manifest.webmanifest','./questoes.json','./reading-data.json',
  './study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./notes.js',
  './offline.js','./backup.js','./cycle-navigator.js','./tablet.css'
 ];
