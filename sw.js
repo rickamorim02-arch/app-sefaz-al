@@ -1,8 +1,8 @@
-const CACHE='sefaz-al-offline-v48';
+const CACHE='sefaz-al-offline-v49';
 const CORE=[
  './','./index.html','./manifest.webmanifest','./questoes.json','./reading-data.json',
  './study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./notes.js',
- './offline.js','./backup.js','./cycle-navigator.js','./tablet.css'
+ './offline.js','./backup.js','./cycle-timer.js','./cycle-navigator.js','./tablet.css'
 ];
 self.addEventListener('install',e=>{
  self.skipWaiting();
