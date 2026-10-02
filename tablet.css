@@ -1,3 +1,5 @@
+/* Otimização global do feed: questões fora da tela não precisam ser renderizadas imediatamente. */
+.q{content-visibility:auto;contain-intrinsic-size:auto 100vh}
 /* Layout tablet: regras abaixo só entram em telas >= 700px. O celular permanece intacto. */
 @media (min-width:700px){
   body{font-size:16px}
