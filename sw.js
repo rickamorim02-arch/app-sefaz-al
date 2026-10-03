@@ -1,7 +1,11 @@
-const CACHE='sefaz-al-offline-v50';
-const QUESTION_BANK='./questoes-com-comentarios-v45.json';
+const CACHE='sefaz-al-offline-v51';
+const QUESTION_PARTS=[
+ './questoes-originais-shorts-v46-parte-1.json',
+ './questoes-originais-shorts-v46-parte-2.json',
+ './questoes-originais-shorts-v46-parte-3.json'
+];
 const CORE=[
- './','./index.html','./manifest.webmanifest',QUESTION_BANK,'./reading-data.json',
+ './','./index.html','./manifest.webmanifest',...QUESTION_PARTS,'./reading-data.json',
  './study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./notes.js',
  './offline.js','./backup.js','./cycle-timer.js','./cycle-navigator.js','./tablet.css'
 ];
@@ -23,19 +27,34 @@ self.addEventListener('message',e=>{
    }));
  }
 });
+async function loadQuestionPart(url){
+ try{
+   const r=await fetch(url,{cache:'no-store'});
+   if(!r.ok)throw new Error(String(r.status));
+   const clone=r.clone();caches.open(CACHE).then(c=>c.put(url,clone));
+   return await r.json();
+ }catch(err){
+   const cached=await caches.match(url);if(!cached)throw err;return await cached.json();
+ }
+}
+async function combinedQuestionBank(){
+ const parts=await Promise.all(QUESTION_PARTS.map(loadQuestionPart));
+ let questions=[];
+ for(const d of parts){
+   const arr=Array.isArray(d)?d:(Array.isArray(d.questions)?d.questions:(Array.isArray(d.questoes)?d.questoes:[]));
+   questions=questions.concat(arr);
+ }
+ if(!questions.length)throw new Error('Banco v46 sem questões');
+ const base=parts.find(d=>d&&typeof d==='object'&&!Array.isArray(d))||{};
+ const body=JSON.stringify({bank_version:46,updated_at:base.updated_at||'2026-10-03',total_questions:questions.length,questions});
+ return new Response(body,{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
+}
 self.addEventListener('fetch',e=>{
  if(e.request.method!=='GET')return;
  const u=new URL(e.request.url);if(u.origin!==location.origin)return;
  const dynamic=/\.(?:js|css|json)$/i.test(u.pathname);
  const asksLegacyBank=/\/questoes\.json$/i.test(u.pathname);
- if(asksLegacyBank){
-   const bankUrl=new URL(QUESTION_BANK,self.registration.scope).href;
-   e.respondWith(fetch(bankUrl,{cache:'no-store'}).then(r=>{
-     if(!r.ok)throw new Error(String(r.status));
-     const x=r.clone();caches.open(CACHE).then(c=>c.put(QUESTION_BANK,x));return r;
-   }).catch(()=>caches.match(QUESTION_BANK)));
-   return;
- }
+ if(asksLegacyBank){e.respondWith(combinedQuestionBank());return;}
  if(e.request.mode==='navigate'){
    e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{const x=r.clone();caches.open(CACHE).then(c=>c.put('./index.html',x));return r}).catch(()=>caches.match('./index.html')));return;
  }
