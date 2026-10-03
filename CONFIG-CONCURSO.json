@@ -1,0 +1,46 @@
+{
+  "modelo": "Concurso Shorts",
+  "modelo_version": 1,
+  "snapshot_date": "2026-10-03",
+  "concurso_referencia": "SEFAZ-AL",
+  "conteudo_substituivel": [
+    "nome_concurso",
+    "orgao",
+    "disciplinas",
+    "aulas",
+    "questoes",
+    "comentarios",
+    "leitura",
+    "dicionario",
+    "ciclo_de_estudos"
+  ],
+  "estrutura_preservada": [
+    "shorts",
+    "correcao",
+    "filtros",
+    "ciclo",
+    "timer",
+    "leitura",
+    "dicionario_offline",
+    "anotacoes",
+    "materias",
+    "desempenho",
+    "relatorio_erros",
+    "backup",
+    "pwa_offline",
+    "responsividade_celular_tablet"
+  ],
+  "banco_questoes": {
+    "version": 46,
+    "parts": [
+      "questoes-originais-shorts-v46-parte-1.json",
+      "questoes-originais-shorts-v46-parte-2.json",
+      "questoes-originais-shorts-v46-parte-3.json"
+    ]
+  },
+  "reading_data": "reading-data.json",
+  "offline": {
+    "service_worker": "sw.js",
+    "cache_reference": "sefaz-al-offline-v56"
+  }
+}
