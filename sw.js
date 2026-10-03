@@ -1,6 +1,7 @@
-const CACHE='sefaz-al-offline-v49';
+const CACHE='sefaz-al-offline-v50';
+const QUESTION_BANK='./questoes-com-comentarios-v45.json';
 const CORE=[
- './','./index.html','./manifest.webmanifest','./questoes.json','./reading-data.json',
+ './','./index.html','./manifest.webmanifest',QUESTION_BANK,'./reading-data.json',
  './study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./notes.js',
  './offline.js','./backup.js','./cycle-timer.js','./cycle-navigator.js','./tablet.css'
 ];
@@ -26,6 +27,15 @@ self.addEventListener('fetch',e=>{
  if(e.request.method!=='GET')return;
  const u=new URL(e.request.url);if(u.origin!==location.origin)return;
  const dynamic=/\.(?:js|css|json)$/i.test(u.pathname);
+ const asksLegacyBank=/\/questoes\.json$/i.test(u.pathname);
+ if(asksLegacyBank){
+   const bankUrl=new URL(QUESTION_BANK,self.registration.scope).href;
+   e.respondWith(fetch(bankUrl,{cache:'no-store'}).then(r=>{
+     if(!r.ok)throw new Error(String(r.status));
+     const x=r.clone();caches.open(CACHE).then(c=>c.put(QUESTION_BANK,x));return r;
+   }).catch(()=>caches.match(QUESTION_BANK)));
+   return;
+ }
  if(e.request.mode==='navigate'){
    e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{const x=r.clone();caches.open(CACHE).then(c=>c.put('./index.html',x));return r}).catch(()=>caches.match('./index.html')));return;
  }
