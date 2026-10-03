@@ -1,4 +1,4 @@
-const CACHE='sefaz-al-offline-v52';
+const CACHE='sefaz-al-offline-v53';
 const QUESTION_PARTS=['./questoes-originais-shorts-v46-parte-1.json','./questoes-originais-shorts-v46-parte-2.json','./questoes-originais-shorts-v46-parte-3.json'];
 const CORE=['./','./index.html','./manifest.webmanifest',...QUESTION_PARTS,'./reading-data.json','./study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./notes.js','./assistant.js','./offline.js','./backup.js','./cycle-timer.js','./cycle-navigator.js','./tablet.css'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(async c=>{for(const url of CORE){try{const r=await fetch(url,{cache:'reload'});if(r.ok)await c.put(url,r.clone())}catch(_){}}}))});
