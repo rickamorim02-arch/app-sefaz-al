@@ -1,8 +1,13 @@
 {
   "name": "Concurso Shorts SEFAZ-AL 2026",
   "short_name": "SEFAZ-AL",
+  "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#06131f",
-  "theme_color": "#071b2d"
+  "theme_color": "#071b2d",
+  "lang": "pt-BR",
+  "description": "Aplicativo de estudos para o concurso SEFAZ-AL 2026"
 }
