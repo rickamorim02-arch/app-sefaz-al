@@ -10,13 +10,13 @@ async function sendBackground(item,blob){
     return true;
   }catch(e){mark(item.id,'pendente de envio');toast('⚠️ Áudio salvo; envio ficará pendente.');return false}
 }
-async function retry(item){try{let blob=await fetch(item.audio).then(r=>r.blob());return await sendBackground(item,blob)}catch(_){return false}}
+async function retry(item){toast('Este áudio antigo precisa ser reenviado a partir da gravação original.');return false}
 async function keep(blob,duration){
-  let item={id:Date.now(),created:new Date().toISOString(),duration,type:blob.type||'audio/webm',audio:await toData(blob),meta:context(),status:'salvo no SEFAZ-AL'};
-  let a=saved();a.unshift(item);
-  if(!persist(a)){a=a.slice(0,Math.max(0,a.length-1));persist(a);toast('⚠️ Sem espaço para guardar o áudio.');return}
+  let item={id:Date.now(),created:new Date().toISOString(),duration,type:blob.type||'audio/webm',meta:context(),status:'enviando ao Livro por Voz'};
+  let a=saved();a.unshift(item);if(a.length>100)a.length=100;
+  persist(a);
   window.dispatchEvent(new CustomEvent('sefazVoiceReady',{detail:{blob,record:item}}));
-  toast('✓ Áudio salvo no SEFAZ-AL ('+fmt(duration)+'). Enviando…');
-  sendBackground(item,blob);
+  toast('✓ Gravação concluída ('+fmt(duration)+'). Enviando…');
+  await sendBackground(item,blob);
 }
 async function toggle(){let b=$('voiceFloat');if(rec&&rec.state==='recording'){rec.stop();return}try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});parts=[];rec=new MediaRecorder(stream);started=Date.now();rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data)};rec.onstop=async()=>{clearInterval(timer);let duration=Date.now()-started;stream?.getTracks().forEach(t=>t.stop());stream=null;let blob=new Blob(parts,{type:rec.mimeType||'audio/webm'});setIdle();if(blob.size)await keep(blob,duration);else toast('⚠️ A gravação ficou vazia.')};rec.start(500);b.textContent='⏹';b.classList.add('recording');$('voiceClock').textContent='🔴 00:00';timer=setInterval(()=>$('voiceClock').textContent='🔴 '+fmt(Date.now()-started),250);toast('🔴 Gravando. Você pode continuar nos Shorts.')}catch(e){setIdle();toast('Não foi possível acessar o microfone.')}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.sefazVoiceRecordings=()=>saved();window.sefazDeviceCode=()=>deviceCode();window.sendSefazVoiceToLivro=id=>{let x=saved().find(r=>String(r.id)===String(id));return x?retry(x):false};})();
