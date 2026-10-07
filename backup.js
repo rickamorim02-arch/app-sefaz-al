@@ -1,7 +1,7 @@
 (function(){
 const FORMAT='sefaz-al-backup',VERSION=2;
 const LEGACY=['answers','favorites','notes','progress'];
-function allowed(k){return !!k&&(k.startsWith('sefaz-')||LEGACY.includes(k))}
+function allowed(k){return !!k&&(k.startsWith('sefaz-')||k==='sefazVoiceRecordings_v1'||LEGACY.includes(k))}
 function collect(){const ls={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(allowed(k))ls[k]=localStorage.getItem(k)}return{format:FORMAT,version:VERSION,createdAt:new Date().toISOString(),origin:location.origin,app:'SEFAZ-AL',localStorage:ls,summary:{keys:Object.keys(ls).length}}}
 function exportBackup(){const m=document.getElementById('backupMsg');try{const data=collect(),blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a'),d=new Date().toISOString().slice(0,10);a.href=url;a.download='backup-sefaz-al-v2-'+d+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);if(m)m.textContent='✅ Backup completo exportado: '+data.summary.keys+' conjuntos de dados locais preservados.'}catch(e){if(m)m.textContent='❌ Não foi possível exportar o backup.'}}
 function validate(data){if(!data||data.format!==FORMAT||!data.localStorage||typeof data.localStorage!=='object'||Array.isArray(data.localStorage))throw new Error('formato');let entries=Object.entries(data.localStorage).filter(([k])=>allowed(k));if(!entries.length)throw new Error('vazio');return entries}
