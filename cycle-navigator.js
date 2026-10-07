@@ -1,6 +1,6 @@
 (function(){
 const SIZE=20, PAGEKEY='sefaz-al-cycle-page-v1'; let DATA=[], page=1;
-function source(){if(DATA.length)return DATA;for(const x of[window.Q,window.questions,window.__QUESTOES,window.__questions])if(Array.isArray(x)&&x.length)return x;return []}
+function source(){if(Array.isArray(window.st?.qs)&&window.st.qs.length)return window.st.qs;if(DATA.length)return DATA;for(const x of[window.Q,window.questions,window.__QUESTOES,window.__questions])if(Array.isArray(x)&&x.length)return x;return []}
 async function ensureData(){let a=source();if(a.length)return a;try{let r=await fetch('questoes.json',{cache:'no-store'});if(r.ok){let j=await r.json();DATA=Array.isArray(j)?j:(Array.isArray(j.questions)?j.questions:Array.isArray(j.questoes)?j.questoes:[]);if(DATA.length)window.__QUESTOES=DATA}}catch(e){}return DATA}
 function qs(){return source().filter(q=>!window.validQuestion||window.validQuestion(q))}
 function subject(q){return String(q.source_package_canonical||q.source_package||q.s||'Outras').trim()||'Outras'}
