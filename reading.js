@@ -3,7 +3,8 @@ const INDEX=[["Auditoria Fiscal",3],["Contabilidade Geral",20],["Contabilidade P
 let DATA=[],loaded=false;
 const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function natural(a,b){return String(a).localeCompare(String(b),'pt-BR',{numeric:true})}
-function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}\nfunction subjectKey(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}\nwindow.sefazReadingData=()=>DATA.slice();
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function subjectKey(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}\nwindow.sefazReadingData=()=>DATA.slice();
 function lessonNo(s){let m=String(s||'').match(/\bAula\s*(?:n[º°.]?\s*)?(\d{1,3})\b/i);return m?Number(m[1]):null}
 function matchSubject(a,b){return subjectKey(a)===subjectKey(b)}
 function findReading(p){let same=DATA.filter(x=>matchSubject(x.subject,p.subject));if(!same.length)return null;let exact=same.find(x=>norm(x.lesson)===norm(p.lesson));if(exact)return exact;let n=lessonNo(p.lesson);if(n!==null){let numbered=same.filter(x=>lessonNo(x.lesson)===n);if(numbered.length===1)return numbered[0]}return null}
