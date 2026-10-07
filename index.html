@@ -24,7 +24,7 @@ async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-st
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
-st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=73')}
+st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=74')}
 function mixQuestions(a){var groups={},limit=Math.min(80,a.length);a.forEach(function(q){var k=String(q.r||'');(groups[k]||(groups[k]=[])).push(q)});var out=[],last='',run=0,keys=Object.keys(groups);while(out.length<limit){var avail=keys.filter(function(k){return groups[k].length&&!(k===last&&run>=2)});if(!avail.length)avail=keys.filter(function(k){return groups[k].length});if(!avail.length)break;avail.sort(function(x,y){return groups[y].length-groups[x].length});var pool=avail.slice(0,Math.min(3,avail.length)),k=pool[Math.floor(Math.random()*pool.length)],g=groups[k],i=Math.floor(Math.random()*g.length),q=g[i];g[i]=g[g.length-1];g.pop();out.push(q);if(k===last)run++;else{last=k;run=1}}return out}
 function questionText(q){var s=String(q&&q.q||'').trim(),m='julgue, isoladamente, a seguinte alternativa apresentada no material:',p=s.toLowerCase().lastIndexOf(m);if(p>=0)s=s.slice(0,p);s=s.replace(/\b\d{1,3}\s+Aula\s+\d{1,3}\b\s*/gi,' ');return s.replace(/\s{2,}/g,' ').trim()}
 function validQuestion(q){if(!q||!String(q.id||'').trim()||!String(q.q||'').trim())return false;var txt=String(q.q||'').toLowerCase();if(txt.indexOf('julgue, isoladamente, a seguinte alternativa apresentada no material:')>=0)return false;var opts=cleanOptions(q),r=String(q.r||'').trim().charAt(0).toUpperCase();return opts.length>=2&&opts.some(function(o){return o.l===r})}
@@ -49,5 +49,5 @@ init();
 <script src="dictionary.js?v=70"></script>
 <script src="study.js?v=50"></script>
 <script src="study-cycle-plan.js?v=50"></script>
-<script src="study-open-fix.js?v=72"></script>
+<script src="study-open-fix.js?v=74"></script>
 </body></html>
