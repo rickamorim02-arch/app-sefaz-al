@@ -20,7 +20,7 @@ function buildValidated5000(all){
  for(var n=0;n<pool.length&&out.length<5000;n++){var x=pool[n],key=String(x.q||'').toLowerCase().replace(/[^a-z0-9áàâãéêíóôõúüç]+/gi,' ').trim();if(seen[key])continue;seen[key]=1;out.push(x)}
  return out
 }
-async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
+async async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
