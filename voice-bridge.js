@@ -31,4 +31,46 @@ async function keep(blob,duration){
   toast('✓ Gravação concluída ('+fmt(duration)+'). Enviando…');
   await sendBackground(item,blob);
 }
-async function toggle(){let b=$('voiceFloat');if(rec&&rec.state==='recording'){rec.stop();return}try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});parts=[];rec=new MediaRecorder(stream);started=Date.now();rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data)};rec.onstop=async()=>{clearInterval(timer);let duration=Date.now()-started;stream?.getTracks().forEach(t=>t.stop());stream=null;let blob=new Blob(parts,{type:rec.mimeType||'audio/webm'});setIdle();if(blob.size)await keep(blob,duration);else toast('⚠️ A gravação ficou vazia.')};rec.start(500);b.textContent='⏹';b.classList.add('recording');$('voiceClock').textContent='🔴 00:00';timer=setInterval(()=>$('voiceClock').textContent='🔴 '+fmt(Date.now()-started),250);toast('🔴 Gravando. Você pode continuar nos Shorts.')}catch(e){setIdle();toast('Não foi possível acessar o microfone.')}}cleanLegacyAudio();window.addEventListener('online',flushQueue);setTimeout(flushQueue,1200);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.sefazVoiceRecordings=()=>saved();window.sefazDeviceCode=()=>deviceCode();window.sendSefazVoiceToLivro=id=>{let x=saved().find(r=>String(r.id)===String(id));return x?retry(x):false};})();
+let starting=false,stopping=false;
+async function toggle(){
+  const b=$('voiceFloat');
+  if(starting||stopping)return;
+  if(rec&&rec.state==='recording'){
+    stopping=true;
+    clearInterval(timer);timer=null;
+    if(b){b.disabled=true;b.textContent='⌛'}
+    toast('Finalizando gravação…');
+    try{rec.stop()}catch(e){stopping=false;if(b)b.disabled=false;toast('Falha ao interromper gravação.')}
+    return;
+  }
+  starting=true;if(b)b.disabled=true;
+  let nextStream=null;
+  try{
+    nextStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    stream=nextStream;parts=[];
+    const activeRec=new MediaRecorder(nextStream);
+    rec=activeRec;started=Date.now();
+    activeRec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data)};
+    activeRec.onstop=async()=>{
+      clearInterval(timer);timer=null;
+      const duration=Date.now()-started;
+      nextStream.getTracks().forEach(t=>t.stop());
+      if(stream===nextStream)stream=null;
+      const blob=new Blob(parts,{type:activeRec.mimeType||'audio/webm'});
+      parts=[];if(rec===activeRec)rec=null;
+      stopping=false;setIdle();if(b)b.disabled=false;
+      if(blob.size)await keep(blob,duration);else toast('⚠️ A gravação ficou vazia.');
+    };
+    activeRec.onerror=()=>{try{activeRec.stop()}catch(_){}};
+    activeRec.start(500);
+    if(b){b.textContent='⏹';b.classList.add('recording');b.disabled=false}
+    $('voiceClock').textContent='🔴 00:00';
+    timer=setInterval(()=>$('voiceClock').textContent='🔴 '+fmt(Date.now()-started),250);
+    toast('🔴 Gravando. Toque novamente para parar.');
+  }catch(e){
+    nextStream?.getTracks().forEach(t=>t.stop());
+    rec=null;stream=null;stopping=false;setIdle();if(b)b.disabled=false;
+    toast('Não foi possível acessar o microfone.');
+  }finally{starting=false}
+}
+cleanLegacyAudio();window.addEventListener('online',flushQueue);setTimeout(flushQueue,1200);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.sefazVoiceRecordings=()=>saved();window.sefazDeviceCode=()=>deviceCode();window.sendSefazVoiceToLivro=id=>{let x=saved().find(r=>String(r.id)===String(id));return x?retry(x):false};})();
