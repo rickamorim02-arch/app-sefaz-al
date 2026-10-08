@@ -40,7 +40,7 @@ async function toggle(){
     clearInterval(timer);timer=null;
     if(b){b.disabled=true;b.textContent='⌛'}
     toast('Finalizando gravação…');
-    try{rec.stop()}catch(e){stopping=false;if(b)b.disabled=false;toast('Falha ao interromper gravação.')}
+    try{const active=rec;active.stop();if(stream)stream.getTracks().forEach(t=>t.stop());setTimeout(()=>{if(stopping&&rec===active){stopping=false;rec=null;setIdle();if(b)b.disabled=false;toast('Gravação interrompida; não foi possível finalizar o arquivo.')}},2500)}catch(e){if(stream)stream.getTracks().forEach(t=>t.stop());stopping=false;rec=null;setIdle();if(b)b.disabled=false;toast('Falha ao finalizar gravação.')}
     return;
   }
   starting=true;if(b)b.disabled=true;
