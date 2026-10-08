@@ -26,7 +26,7 @@ async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-st
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
-st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';resetFeedOrder();save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=111')}
+st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';resetFeedOrder();save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=112')}
 var feedOrderKey='',feedOrder=[];
 function mixQuestions(a){var key=feedMode+'|'+a.map(function(q){return String(q.id)}).join('|');if(key===feedOrderKey&&feedOrder.length===a.length)return feedOrder.slice();var out=a.slice();for(var i=out.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=out[i];out[i]=out[j];out[j]=t}feedOrderKey=key;feedOrder=out.slice();return out}
 function resetFeedOrder(){feedOrderKey='';feedOrder=[]}
@@ -54,7 +54,7 @@ init();
 <script src="study.js?v=50"></script>
 <script src="study-cycle-plan.js?v=75"></script>
 <script src="study-open-fix.js?v=89"></script>
-<script src="offline.js?v=111"></script>
+<script src="offline.js?v=112"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),KEY='sefazAL_livroInterno_v1',DB='sefazAL_livroAudios_v1',STORE='audios';
