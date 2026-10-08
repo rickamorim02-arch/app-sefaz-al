@@ -20,11 +20,11 @@ function buildValidated5000(all){
  for(var n=0;n<pool.length&&out.length<5000;n++){var x=pool[n],key=String(x.q||'').toLowerCase().replace(/[^a-z0-9áàâãéêíóôõúüç]+/gi,' ').trim();if(seen[key])continue;seen[key]=1;out.push(x)}
  return out
 }
-async async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
+async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
-st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=99')}
+st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion)}render();more();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=100')}
 function mixQuestions(a){var n=a.length,limit=Math.min(200,n);if(n<=limit)return a.slice();var out=[],used={},last='',run=0,tries=0;while(out.length<limit&&tries<limit*40){tries++;var i=Math.floor(Math.random()*n);if(used[i])continue;var q=a[i],k=String(q.r||'');if(k===last&&run>=2)continue;used[i]=1;out.push(q);if(k===last)run++;else{last=k;run=1}}if(out.length<limit){for(var j=0;j<n&&out.length<limit;j++)if(!used[j])out.push(a[j])}return out}
 function questionText(q){var s=String(q&&q.q||'').trim(),m='julgue, isoladamente, a seguinte alternativa apresentada no material:',p=s.toLowerCase().lastIndexOf(m);if(p>=0)s=s.slice(0,p);s=s.replace(/\b\d{1,3}\s+Aula\s+\d{1,3}\b\s*/gi,' ');return s.replace(/\s{2,}/g,' ').trim()}
 function validQuestion(q){if(!q||!String(q.id||'').trim()||!String(q.q||'').trim())return false;var txt=String(q.q||'').toLowerCase();if(txt.indexOf('julgue, isoladamente, a seguinte alternativa apresentada no material:')>=0)return false;var opts=cleanOptions(q),r=String(q.r||'').trim().charAt(0).toUpperCase();return opts.length>=2&&opts.some(function(o){return o.l===r})}
@@ -50,6 +50,6 @@ init();
 <script src="study.js?v=50"></script>
 <script src="study-cycle-plan.js?v=75"></script>
 <script src="study-open-fix.js?v=89"></script>
-<script src="offline.js?v=99"></script>
+<script src="offline.js?v=100"></script>
 <script src="voice-bridge.js?v=16"></script>
 </body></html>
