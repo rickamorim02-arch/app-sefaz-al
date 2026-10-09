@@ -35,3 +35,19 @@
   .q h1{font-size:28px;line-height:1.27;max-width:980px}
   .opt{font-size:16px;padding:14px 18px}
 }
+
+
+/* Tablet: compacta somente o bloco de controles do Shorts marcado pelo usuário. */
+@media (min-width:700px){
+  .feedfilter{top:54px;padding:5px 14px;gap:6px;align-items:center}
+  .feedfilter button{padding:7px 8px;font-size:13px;min-height:34px;line-height:1.05}
+  .feedfilter #fp,.feedfilter #fr,.feedfilter #fa{flex:1 1 0}
+  .feedfilter #orderRandom,.feedfilter #orderCycle{flex:1 1 100%!important;flex-basis:100%!important;min-height:32px;padding:6px 8px}
+  .q{padding-top:98px}
+}
+@media (min-width:1000px) and (orientation:landscape){
+  .feedfilter{padding:4px 14px;gap:5px}
+  .feedfilter button{padding:6px 8px;min-height:32px}
+  .feedfilter #orderRandom,.feedfilter #orderCycle{min-height:30px;padding:5px 8px}
+  .q{padding-top:88px}
+}
