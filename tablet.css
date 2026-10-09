@@ -51,3 +51,12 @@
   .feedfilter #orderRandom,.feedfilter #orderCycle{min-height:30px;padding:5px 8px}
   .q{padding-top:88px}
 }
+
+/* v117 horizontal ultracompacto: filtros em uma única faixa. */
+@media (min-width:900px) and (orientation:landscape){
+  .feedfilter{padding:3px 10px!important;gap:4px!important;flex-wrap:wrap!important}
+  .feedfilter button{min-height:25px!important;padding:3px 6px!important;font-size:11px!important;line-height:1!important}
+  .feedfilter #fp,.feedfilter #fr,.feedfilter #fa{flex:0 1 15%!important}
+  .feedfilter #orderRandom,.feedfilter #orderCycle{flex:1 1 22%!important;flex-basis:auto!important}
+  body.cyclePagingOn .q{padding-top:6px!important}
+}
