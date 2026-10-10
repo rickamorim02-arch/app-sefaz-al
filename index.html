@@ -22,7 +22,7 @@ function buildValidated5000(all){
  for(var n=0;n<pool.length&&out.length<5000;n++){var x=pool[n],key=String(x.q||'').toLowerCase().replace(/[^a-z0-9áàâãéêíóôõúüç]+/gi,' ').trim();if(seen[key])continue;seen[key]=1;out.push(x)}
  return out
 }
-async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
+async function init(){try{const r=await fetch('./questoes.json?v=126',{cache:'reload'});if(!r.ok)throw Error(r.status);const d=await r.json();const custom=(st.qs||[]).filter(x=>String(x.id).startsWith('u'));const approved=(d.questions||[]).filter(validQuestion);if(!approved.length)throw Error('Banco sem questões válidas');const ids=new Set(approved.map(x=>String(x.id)));st.qs=[...approved,...custom.filter(x=>!ids.has(String(x.id))&&validQuestion(x))];
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
@@ -61,16 +61,9 @@ init();
  };
 
 })();
-/* v125: cria apenas o botão Leitura; o módulo e os resumos só carregam após toque. */
+/* v126: botão Leitura sob demanda sem conflito de ID. */
 (function(){
- function launcher(){
-  const nav=document.querySelector('.app nav'); if(!nav||document.getElementById('nreading'))return !!nav;
-  const b=document.createElement('button'); b.id='nreading'; b.innerHTML='📖<br>Leitura';
-  b.onclick=async function(){b.disabled=true;try{await window.sefazLoadFeature('reading');const real=document.getElementById('nreading');if(real&&real!==b&&typeof real.onclick==='function')real.onclick()}catch(e){alert('Não foi possível abrir Leitura agora.')}finally{b.disabled=false}};
-  nav.insertBefore(b,document.getElementById('nbk')); return true;
- }
- if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true});
-})();
+ function launcher(){const nav=document.querySelector('.app nav');if(!nav||document.getElementById('readingLauncher'))return !!nav;const b=document.createElement('button');b.id='readingLauncher';b.innerHTML='📖<br>Leitura';b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('reading');setTimeout(()=>{const real=document.getElementById('nreading');if(real&&typeof real.onclick==='function')real.onclick()},0)}catch(e){alert('Não foi possível abrir Leitura agora.');launcher()}};nav.insertBefore(b,document.getElementById('nbk'));return true}if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true})})();
 </script>
 
 <script>
