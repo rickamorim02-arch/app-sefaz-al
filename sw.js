@@ -1,6 +1,6 @@
 const CACHE='sefaz-al-offline-v123';
 const QUESTION_PARTS=['./questoes-originais-shorts-v46-parte-1.json','./questoes-originais-shorts-v46-parte-2.json','./questoes-originais-shorts-v46-parte-3.json'];
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./study.js','./study-open-fix.js','./study-cycle-plan.js','./reading.js','./reading-tools.js','./notes.js','./dictionary.js','./filter-visibility.js','./nav-layout.js','./offline.js','./adaptive-study.js','./study-links.js','./study-integration.js','./pwa.js','./backup.js','./cycle-timer.js','./cycle-navigator.js','./tablet.css','./study-sounds.js'];
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./reading.js','./reading-tools.js','./notes.js','./dictionary.js','./filter-visibility.js','./nav-layout.js','./offline.js','./adaptive-study.js','./study-links.js','./study-integration.js','./pwa.js','./backup.js','./tablet.css','./study-sounds.js'];
 const LARGE=new Set([...QUESTION_PARTS,'./reading-data.json']);
 const CORE=[...SHELL,...LARGE];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(async c=>{for(const url of SHELL){try{const r=await fetch(url,{cache:'reload'});if(r.ok)await c.put(url,r.clone())}catch(_){}}}))});
