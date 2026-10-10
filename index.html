@@ -189,4 +189,35 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden&&tim
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+</script><style>
+#sefazTimerAlert{position:fixed;inset:0;z-index:99999;background:rgba(0,5,15,.88);display:none;align-items:center;justify-content:center;padding:24px}
+#sefazTimerAlert.show{display:flex}
+#sefazTimerAlert .inner{background:#102e4b;color:white;border:3px solid #ffd52e;border-radius:22px;padding:30px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 0 45px #ffd52e66}
+#sefazTimerAlert h2{font-size:30px;margin:10px 0}#sefazTimerAlert button{padding:15px 22px;background:#ffd52e;color:#061a33;border:0;border-radius:12px;font-weight:900;font-size:17px;width:100%}
+</style>
+<div id="sefazTimerAlert" role="alertdialog" aria-modal="true" aria-labelledby="sefazTimerTitle"><div class="inner"><div style="font-size:52px">⏰</div><h2 id="sefazTimerTitle">Tempo encerrado!</h2><p>Sua sessão de estudos terminou.</p><button id="sefazTimerDismiss">Entendi — fechar aviso</button></div></div>
+<script>
+/* v139: cronômetro flutuante único; substitui controles antigos e alerta visível */
+(function(){
+const $=id=>document.getElementById(id);
+let remaining=3000,end=0,interval=null;
+const running=()=>interval!==null;
+const minutes=()=>Math.max(1,Math.min(999,parseInt($('countdownMinutes').value,10)||50));
+const format=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+function draw(){const d=$('countdownDisplay');if(d)d.textContent=format(Math.max(0,remaining));const t=$('countdownToggle');if(t)t.textContent=running()?'⏸':'▶'}
+function stop(){if(interval!==null)clearInterval(interval);interval=null}
+function finish(){stop();remaining=0;draw();$('sefazTimerAlert').classList.add('show');try{navigator.vibrate?.([400,180,400,180,600])}catch(e){}try{if('Notification'in window&&Notification.permission==='granted')new Notification('SEFAZ-AL — Tempo encerrado',{body:'Sua sessão de estudos terminou.'})}catch(e){}}
+function tick(){remaining=Math.max(0,Math.ceil((end-Date.now())/1000));if(remaining===0)finish();else draw()}
+function init(){
+const toggle=$('countdownToggle'),reset=$('countdownReset'),input=$('countdownMinutes');if(!toggle||!reset||!input)return;
+remaining=minutes()*60;draw();
+toggle.onclick=()=>{if(running()){tick();if(running())stop();draw();return}if(remaining<=0)remaining=minutes()*60;end=Date.now()+remaining*1000;interval=setInterval(tick,250);draw()};
+reset.onclick=()=>{stop();remaining=minutes()*60;draw()};
+input.onchange=()=>{if(!running()){remaining=minutes()*60;draw()}};
+$('sefazTimerDismiss').onclick=()=>$('sefazTimerAlert').classList.remove('show');
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running())tick()});
+window.addEventListener('pageshow',()=>{if(running())tick()});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 </script></body></html>
