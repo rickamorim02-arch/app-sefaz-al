@@ -64,6 +64,17 @@ init();
 /* v126: botão Leitura sob demanda sem conflito de ID. */
 (function(){
  function launcher(){const nav=document.querySelector('.app nav');if(!nav||document.getElementById('readingLauncher'))return !!nav;const b=document.createElement('button');b.id='readingLauncher';b.innerHTML='📖<br>Leitura';b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('reading');setTimeout(()=>{const real=document.getElementById('nreading');if(real&&typeof real.onclick==='function')real.onclick()},0)}catch(e){alert('Não foi possível abrir Leitura agora.');launcher()}};nav.insertBefore(b,document.getElementById('nbk'));return true}if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true})})();
+
+/* v128: Ciclo sob demanda. Nenhum módulo do ciclo executa na inicialização. */
+(function(){
+ function cycleLauncher(){
+  const nav=document.querySelector('.app nav');if(!nav||document.getElementById('cycleLauncher')||document.getElementById('nstudy'))return !!nav;
+  const b=document.createElement('button');b.id='cycleLauncher';b.innerHTML='⏱️<br>Ciclo';
+  b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('study');setTimeout(()=>{const real=document.getElementById('nstudy');if(real&&typeof real.onclick==='function')real.onclick();else if(typeof window.openStudy==='function')window.openStudy()},0)}catch(e){alert('Não foi possível abrir o Ciclo agora.');cycleLauncher()}};
+  nav.insertBefore(b,document.getElementById('nbk'));return true
+ }
+ if(!cycleLauncher())document.addEventListener('DOMContentLoaded',cycleLauncher,{once:true})
+})();
 </script>
 
 <script>
