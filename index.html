@@ -26,7 +26,7 @@ async function init(){try{const r=await fetch('questoes.json?v=24',{cache:'no-st
 const liveIds=new Set(st.qs.map(x=>String(x.id)));
 st.ans=Object.fromEntries(Object.entries(st.ans||{}).filter(([id])=>liveIds.has(String(id))));
 st.fav=Object.fromEntries(Object.entries(st.fav||{}).filter(([id,v])=>liveIds.has(String(id))&&v));
-st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';resetFeedOrder();rebuildIndexes();save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion);rebuildIndexes()}render();requestAnimationFrame(()=>more());if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js?v=120')}
+st.bankVersion=d.bank_version||17;st.bankUpdated=d.updated_at||'2026-09-29';resetFeedOrder();rebuildIndexes();save()}catch(e){console.error('Falha ao carregar banco.',e);st.qs=(st.qs||[]).filter(validQuestion);rebuildIndexes()}render();requestAnimationFrame(()=>more());}
 var feedOrderKey='',feedOrder=[],questionById=new Map(),subjectQuestions=new Map();function rebuildIndexes(){questionById=new Map();subjectQuestions=new Map();for(const q of st.qs){questionById.set(String(q.id),q);if(!subjectQuestions.has(q.s))subjectQuestions.set(q.s,[]);subjectQuestions.get(q.s).push(q)}}
 function mixQuestions(a){var key=feedMode+'|'+a.map(function(q){return String(q.id)}).join('|');if(key===feedOrderKey&&feedOrder.length===a.length)return feedOrder.slice();var out=a.slice();for(var i=out.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=out[i];out[i]=out[j];out[j]=t}feedOrderKey=key;feedOrder=out.slice();return out}
 function resetFeedOrder(){feedOrderKey='';feedOrder=[]}
@@ -62,8 +62,11 @@ init();
 
 })();
 </script>
-<script>setTimeout(()=>window.sefazLoadFeature('reading').catch(()=>{}),350)</script>
-<script src="offline.js?v=123"></script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
+
+<script>
+/* v124 estabilidade: desativa worker antigo sem recarregar a pagina. */
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
+</script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const MODES=[
