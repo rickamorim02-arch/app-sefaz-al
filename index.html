@@ -200,7 +200,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* v139: cronômetro flutuante único; substitui controles antigos e alerta visível */
 (function(){
 const $=id=>document.getElementById(id);
-let remaining=3000,end=0,interval=null;
+let remaining=3000,end=0,interval=null,hasStarted=false;
 const running=()=>interval!==null;
 const minutes=()=>Math.max(1,Math.min(999,parseInt($('countdownMinutes').value,10)||50));
 const format=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
@@ -211,9 +211,9 @@ function tick(){remaining=Math.max(0,Math.ceil((end-Date.now())/1000));if(remain
 function init(){
 const toggle=$('countdownToggle'),reset=$('countdownReset'),input=$('countdownMinutes');if(!toggle||!reset||!input)return;
 remaining=minutes()*60;draw();
-toggle.onclick=()=>{if(running()){tick();if(running())stop();draw();return}if(remaining<=0)remaining=minutes()*60;end=Date.now()+remaining*1000;interval=setInterval(tick,250);draw()};
-reset.onclick=()=>{stop();remaining=minutes()*60;draw()};
-input.onchange=()=>{if(!running()){remaining=minutes()*60;draw()}};
+toggle.onclick=()=>{if(running()){tick();if(running())stop();draw();return}if(!hasStarted||remaining<=0){remaining=minutes()*60;hasStarted=true}end=Date.now()+remaining*1000;interval=setInterval(tick,250);draw()};
+reset.onclick=()=>{stop();hasStarted=false;remaining=minutes()*60;draw()};
+input.oninput=()=>{if(!running()){hasStarted=false;remaining=minutes()*60;draw()}};input.onchange=input.oninput;
 $('sefazTimerDismiss').onclick=()=>$('sefazTimerAlert').classList.remove('show');
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running())tick()});
 window.addEventListener('pageshow',()=>{if(running())tick()});
