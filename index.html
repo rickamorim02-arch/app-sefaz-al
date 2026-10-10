@@ -56,7 +56,7 @@ init();
  window.sefazLoadFeature=function(name){
   if(name==='reading')return load('readingModule','reading.js?v=73');
   if(name==='dictionary')return load('dictionaryModule','dictionary.js?v=70');
-  if(name==='study')return load('studyCatalog','study.js?v=50').then(()=>load('studyCyclePlan','study-cycle-plan.js?v=75')).then(()=>load('studyOpenFix','study-open-fix.js?v=89'));
+  if(name==='study')return load('studyCatalog','study.js?v=50').then(()=>load('studyCyclePlan','study-cycle-plan.js?v=75'));
   return Promise.resolve()
  };
 
@@ -65,16 +65,8 @@ init();
 (function(){
  function launcher(){const nav=document.querySelector('.app nav');if(!nav||document.getElementById('readingLauncher'))return !!nav;const b=document.createElement('button');b.id='readingLauncher';b.innerHTML='📖<br>Leitura';b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('reading');setTimeout(()=>{const real=document.getElementById('nreading');if(real&&typeof real.onclick==='function')real.onclick()},0)}catch(e){alert('Não foi possível abrir Leitura agora.');launcher()}};nav.insertBefore(b,document.getElementById('nbk'));return true}if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true})})();
 
-/* v128: Ciclo sob demanda. Nenhum módulo do ciclo executa na inicialização. */
-(function(){
- function cycleLauncher(){
-  const nav=document.querySelector('.app nav');if(!nav||document.getElementById('cycleLauncher')||document.getElementById('nstudy'))return !!nav;
-  const b=document.createElement('button');b.id='cycleLauncher';b.innerHTML='⏱️<br>Ciclo';
-  b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('study');setTimeout(()=>{const real=document.getElementById('nstudy');if(real&&typeof real.onclick==='function')real.onclick();else if(typeof window.openStudy==='function')window.openStudy()},0)}catch(e){alert('Não foi possível abrir o Ciclo agora.');cycleLauncher()}};
-  nav.insertBefore(b,document.getElementById('nbk'));return true
- }
- if(!cycleLauncher())document.addEventListener('DOMContentLoaded',cycleLauncher,{once:true})
-})();
+/* v129: Ciclo isolado do Livro. */
+(function(){function ensureCycleUI(){const app=document.querySelector('.app'),nav=app&&app.querySelector('nav');if(!app||!nav)return false;if(!document.getElementById('study')){const sec=document.createElement('section');sec.id='study';sec.className='panel hidden';sec.innerHTML='<h2>📚 Ciclo de Estudos</h2><p>Abra um bloco e marque as aulas estudadas.</p><div id="studyCyclePlan"></div><div id="studyList" style="display:none"></div>';app.insertBefore(sec,nav)}if(!document.getElementById('cycleLauncher')&&!document.getElementById('nstudy')){const b=document.createElement('button');b.id='cycleLauncher';b.innerHTML='📚<br>Ciclo';b.onclick=async function(){b.disabled=true;try{await window.sefazLoadFeature('study');document.querySelectorAll('.app>main,.app>section').forEach(x=>x.classList.add('hidden'));const sec=document.getElementById('study');if(sec)sec.classList.remove('hidden');const ff=document.getElementById('feedFilter');if(ff)ff.style.display='none';nav.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');if(typeof window.renderStudyCyclePlan==='function')window.renderStudyCyclePlan()}catch(e){alert('Não foi possível abrir o Ciclo agora.')}finally{b.disabled=false}};nav.insertBefore(b,document.getElementById('nbk'))}return true}if(!ensureCycleUI())document.addEventListener('DOMContentLoaded',ensureCycleUI,{once:true})})();
 </script>
 
 <script>
