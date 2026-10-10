@@ -72,7 +72,7 @@ window.sefazNormalizeNav=function(){const nav=document.querySelector('.app nav')
 
 <script>
 /* v125 estabilidade: desativa worker antigo sem recarregar a pagina. */
-if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('PWA indisponível:',err)))}
 </script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
