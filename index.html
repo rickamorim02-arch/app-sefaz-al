@@ -59,12 +59,11 @@ init();
   if(name==='study')return load('studyCatalog','study.js?v=50').then(()=>load('studyCyclePlan','study-cycle-plan.js?v=75')).then(()=>load('studyOpenFix','study-open-fix.js?v=89'));
   return Promise.resolve()
  };
- function idle(){load('studyOpenFix','study-open-fix.js?v=89').catch(()=>{})}
- if('requestIdleCallback'in window)requestIdleCallback(idle,{timeout:5000});else setTimeout(idle,2500);
+
 })();
 </script>
 <script>setTimeout(()=>window.sefazLoadFeature('reading').catch(()=>{}),350)</script>
-<script src="offline.js?v=122"></script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
+<script src="offline.js?v=123"></script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const MODES=[
