@@ -64,10 +64,11 @@ init();
 })();
 </script>
 <script>setTimeout(()=>window.sefazLoadFeature('reading').catch(()=>{}),350)</script>
-<script src="offline.js?v=121"></script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
+<script src="offline.js?v=122"></script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const MODES=[
+{id:'flow',name:'Fluxo Contínuo',use:'Questões e leitura profunda • textura grave estável, sem eventos sonoros',kind:'flow'},
 {id:'brown',name:'Brown Noise',use:'Questões e concentração prolongada',kind:'noise'},
 {id:'white',name:'White Noise',use:'Questões em ambientes barulhentos',kind:'noise'},
 {id:'rain',name:'Chuva suave',use:'Leitura de PDFs e legislação',kind:'noise'},
@@ -86,6 +87,7 @@ function bufferNoise(kind){
  for(let i=0;i<a.length;i++){let w=Math.random()*2-1;if(kind==='brown'){last=(last+.018*w)/1.00015;a[i]=Math.max(-1,Math.min(1,last*3.2))}else if(kind==='rain'){last=.985*last+.015*w;a[i]=(w-last)*.20}else a[i]=w*.27}
  return b
 }
+function continuousFlow(){const rate=ctx.sampleRate,b=ctx.createBuffer(1,rate*12,rate),a=b.getChannelData(0);let slow=0,deep=0;for(let i=0;i<a.length;i++){const w=Math.random()*2-1;slow=.9992*slow+.0008*w;deep=.99975*deep+.00025*slow;a[i]=Math.max(-.32,Math.min(.32,deep*18))}let src=add(ctx.createBufferSource());src.buffer=b;src.loop=true;let low=add(ctx.createBiquadFilter());low.type='lowpass';low.frequency.value=420;low.Q.value=.35;let high=add(ctx.createBiquadFilter());high.type='highpass';high.frequency.value=38;high.Q.value=.2;let g=add(ctx.createGain());g.gain.value=.78;src.connect(low);low.connect(high);high.connect(g);g.connect(master);src.start()}
 function noise(kind){let src=add(ctx.createBufferSource());src.buffer=bufferNoise(kind);src.loop=true;
  let filter=add(ctx.createBiquadFilter());filter.type=kind==='rain'?'lowpass':'lowpass';filter.frequency.value=kind==='rain'?2100:kind==='brown'?850:12000;
  src.connect(filter);filter.connect(master);src.start()}
@@ -113,7 +115,7 @@ async function play(id,auto=false){
  await ctx.resume();clearNodes();master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setValueAtTime(0,ctx.currentTime);
  master.gain.setTargetAtTime((parseFloat($('studyVolume').value)||0)/100,ctx.currentTime,.05);
  current=id;pausedByMic=false;
- if(['brown','white','rain'].includes(id))noise(id);else music(id);
+ if(id==='flow')continuousFlow();else if(['brown','white','rain'].includes(id))noise(id);else music(id);
  persist();draw();
  }catch(e){$('studySoundStatus').textContent='Não foi possível iniciar o áudio: '+e.message}
 }
