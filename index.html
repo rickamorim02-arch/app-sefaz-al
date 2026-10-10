@@ -170,4 +170,23 @@ async function makeZip(){const status=$('bookRecStatus');status.textContent='Mon
 async function render(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];const root=$('bookItems');if(!root)return;root.innerHTML=data.items.length?data.items.map(x=>'<div class="card"><b>'+escapeHtml(x.name)+'</b><audio controls data-player="'+x.id+'"></audio><input data-title="'+x.id+'" placeholder="Título" value="'+escapeHtml(x.title)+'"><textarea rows="5" data-text="'+x.id+'" placeholder="Observação opcional">'+escapeHtml(x.text)+'</textarea><div class="bookrow"><button data-save="'+x.id+'">Salvar texto</button><button data-delete="'+x.id+'">Excluir</button></div></div>').join(''):'<p class="muted">Nenhuma gravação.</p>';for(const x of data.items){try{const blob=await audioOp('get',x.id);if(blob){const u=URL.createObjectURL(blob);urls.push(u);const player=root.querySelector('[data-player="'+x.id+'"]');if(player)player.src=u}}catch(e){console.warn(e)}}root.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{const id=b.dataset.save,x=data.items.find(i=>i.id===id);x.title=root.querySelector('[data-title="'+id+'"]').value;x.text=root.querySelector('[data-text="'+id+'"]').value;save()});root.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Excluir gravação deste aparelho?'))return;const id=b.dataset.delete;await audioOp('delete',id);data.items=data.items.filter(i=>i.id!==id);save()});}
 $('bookRecord').onclick=record;$('bookImportBtn').onclick=()=>$('bookFile').click();$('bookZip').onclick=()=>makeZip().catch(e=>$('bookRecStatus').textContent='Falha ao criar ZIP: '+e.message);$('bookFile').onchange=async e=>{try{if(e.target.files[0])await add(e.target.files[0],e.target.files[0].name)}catch(err){alert('Falha ao importar: '+err.message)}e.target.value=''};render();
 })();</script>
-</body></html>
+<script>
+/* v138: cronômetro regressivo independente, com pausa e ajuste */
+(function(){
+let remaining=3000,deadline=0,timer=null;
+const el=id=>document.getElementById(id);
+const fmt=sec=>String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+function draw(){if(el('countdownDisplay'))el('countdownDisplay').textContent=fmt(Math.max(0,remaining))}
+function pause(){if(timer!==null){clearInterval(timer);timer=null}}
+function readMinutes(){const n=parseInt(el('countdownMinutes')?.value,10);return Math.max(1,Math.min(600,Number.isFinite(n)?n:50))}
+function tick(){remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));draw();if(remaining===0){pause();if(el('countdownStart'))el('countdownStart').textContent='Iniciar';try{navigator.vibrate?.([250,120,250])}catch(e){}alert('Tempo de estudo concluído!')}}
+function init(){const start=el('countdownStart'),stop=el('countdownPause'),reset=el('countdownReset'),input=el('countdownMinutes');if(!start||!stop||!reset||!input)return;remaining=readMinutes()*60;draw();
+start.onclick=function(){if(timer!==null)return;if(remaining<=0)remaining=readMinutes()*60;deadline=Date.now()+remaining*1000;timer=setInterval(tick,250);start.textContent='Em andamento';draw()};
+stop.onclick=function(){if(timer!==null){tick();pause();start.textContent='Continuar'}};
+reset.onclick=function(){pause();remaining=readMinutes()*60;start.textContent='Iniciar';draw()};
+input.onchange=function(){if(timer===null){remaining=readMinutes()*60;start.textContent='Iniciar';draw()}};
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&timer!==null)tick()});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script></body></html>
