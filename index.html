@@ -61,10 +61,20 @@ init();
  };
 
 })();
+/* v125: cria apenas o botão Leitura; o módulo e os resumos só carregam após toque. */
+(function(){
+ function launcher(){
+  const nav=document.querySelector('.app nav'); if(!nav||document.getElementById('nreading'))return !!nav;
+  const b=document.createElement('button'); b.id='nreading'; b.innerHTML='📖<br>Leitura';
+  b.onclick=async function(){b.disabled=true;try{await window.sefazLoadFeature('reading');const real=document.getElementById('nreading');if(real&&real!==b&&typeof real.onclick==='function')real.onclick()}catch(e){alert('Não foi possível abrir Leitura agora.')}finally{b.disabled=false}};
+  nav.insertBefore(b,document.getElementById('nbk')); return true;
+ }
+ if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true});
+})();
 </script>
 
 <script>
-/* v124 estabilidade: desativa worker antigo sem recarregar a pagina. */
+/* v125 estabilidade: desativa worker antigo sem recarregar a pagina. */
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script><script>/* Sons para Estudo — sintese local via Web Audio, sem arquivos externos. */
 (()=>{'use strict';
