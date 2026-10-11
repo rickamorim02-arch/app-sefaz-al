@@ -66,7 +66,7 @@ init();
 window.sefazNormalizeNav=function(){const nav=document.querySelector('.app nav');if(!nav)return;['nf','readingLauncher','nreading','nbk','nmo'].forEach(id=>{const x=document.getElementById(id);if(x&&x.parentNode===nav)nav.appendChild(x)})};
 /* v126: botão Leitura sob demanda sem conflito de ID. */
 (function(){
- function launcher(){const nav=document.querySelector('.app nav');if(!nav||document.getElementById('readingLauncher'))return !!nav;const b=document.createElement('button');b.id='readingLauncher';b.innerHTML='📖<br>Leitura';b.onclick=async function(){b.disabled=true;try{b.remove();await window.sefazLoadFeature('reading');setTimeout(()=>{const real=document.getElementById('nreading');if(real&&typeof real.onclick==='function')real.onclick()},0)}catch(e){alert('Não foi possível abrir Leitura agora.');launcher()}};nav.insertBefore(b,document.getElementById('nbk'));window.sefazNormalizeNav&&window.sefazNormalizeNav();return true}if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true})})();
+ function launcher(){const nav=document.querySelector('.app nav');if(!nav||document.getElementById('readingLauncher'))return !!nav;const b=document.createElement('button');b.id='readingLauncher';b.innerHTML='📖<br>Leitura';b.onclick=async function(){b.disabled=true;try{await window.sefazLoadFeature('reading');setTimeout(()=>{const real=document.getElementById('nreading');if(real&&typeof real.onclick==='function')real.onclick();b.remove()},0)}catch(e){alert('Não foi possível abrir Leitura agora.');launcher()}};nav.insertBefore(b,document.getElementById('nbk'));window.sefazNormalizeNav&&window.sefazNormalizeNav();return true}if(!launcher())document.addEventListener('DOMContentLoaded',launcher,{once:true})})();
 
 </script>
 
