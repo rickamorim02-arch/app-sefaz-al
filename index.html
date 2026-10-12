@@ -240,7 +240,7 @@ function contentTarget(){
  }
  return [...document.querySelectorAll('.app>section,.app>main')].find(e=>!e.classList.contains('hidden'))||document.querySelector('.app');
 }
-function identifier(el){if(el.id==='reading'){const x=el.querySelector('.readingContent,.readingText,.readingArticle,.readingBody');return 'reading|'+(x?.textContent||el.textContent).slice(0,600)}return (el.getAttribute('data-question-id')||el.textContent||el.id).slice(0,700)}
+function identifier(el){if(el.id==='reading'){const x=el.querySelector('.readingContent,.readingText,.readingArticle,.readingBody');return 'reading|'+(x?.textContent||el.textContent).slice(0,600)}return el.dataset.id?'question|'+el.dataset.id:(el.getAttribute('data-question-id')||el.textContent||el.id).slice(0,700)}
 function key(el){let h=2166136261;for(const c of identifier(el)){h=Math.imul(h^c.charCodeAt(0),16777619)}return prefix+(h>>>0).toString(36)}
 function save(){if(currentKey)try{localStorage.setItem(currentKey,JSON.stringify(strokes))}catch(e){}}
 function load(){currentKey=key(target);try{const v=JSON.parse(localStorage.getItem(currentKey)||'[]');strokes=Array.isArray(v)?v:[]}catch(e){strokes=[]}}
