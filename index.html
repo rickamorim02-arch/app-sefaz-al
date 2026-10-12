@@ -81,6 +81,7 @@ const MODES=[
 {id:'brown',name:'Brown Noise',use:'Questões e concentração prolongada',kind:'noise'},
 {id:'white',name:'White Noise',use:'Questões em ambientes barulhentos',kind:'noise'},
 {id:'alpha10',name:'White Noise + Alfa 10 Hz',use:'Som contínuo inspirado no primeiro exemplo • batimentos binaurais (fones estéreo)',kind:'binaural'},
+{id:'alphaPure',name:'Ondas Alfa 10 Hz (sem White Noise)',use:'Apenas batimentos binaurais • usar fones estéreo',kind:'binaural'},
 {id:'rain',name:'Chuva suave',use:'Leitura de PDFs e legislação',kind:'noise'},
 {id:'piano',name:'Piano instrumental',use:'Revisão e leitura moderada',kind:'music'},
 {id:'lofi',name:'Lo-fi instrumental',use:'Questões e revisões',kind:'music'},
@@ -101,9 +102,9 @@ function continuousFlow(){const rate=ctx.sampleRate,b=ctx.createBuffer(1,rate*12
 function noise(kind){let src=add(ctx.createBufferSource());src.buffer=bufferNoise(kind);src.loop=true;
  let filter=add(ctx.createBiquadFilter());filter.type=kind==='rain'?'lowpass':'lowpass';filter.frequency.value=kind==='rain'?2100:kind==='brown'?850:12000;
  src.connect(filter);filter.connect(master);src.start()}
-function alpha10(){
+function alpha10(withNoise=true){
  // Síntese original no aparelho: white noise e tons separados por 10 Hz; não usa áudio de terceiros.
- noise('white');
+ if(withNoise)noise('white');
  const merger=add(ctx.createChannelMerger(2));
  const left=add(ctx.createOscillator()),right=add(ctx.createOscillator());
  const gl=add(ctx.createGain()),gr=add(ctx.createGain());
@@ -136,7 +137,7 @@ async function play(id,auto=false){
  await ctx.resume();clearNodes();master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setValueAtTime(0,ctx.currentTime);
  master.gain.setTargetAtTime((parseFloat($('studyVolume').value)||0)/100,ctx.currentTime,.05);
  current=id;pausedByMic=false;
- if(id==='flow')continuousFlow();else if(id==='alpha10')alpha10();else if(['brown','white','rain'].includes(id))noise(id);else music(id);
+ if(id==='flow')continuousFlow();else if(id==='alpha10')alpha10();else if(id==='alphaPure')alpha10(false);else if(['brown','white','rain'].includes(id))noise(id);else music(id);
  persist();draw();
  }catch(e){$('studySoundStatus').textContent='Não foi possível iniciar o áudio: '+e.message}
 }
