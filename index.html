@@ -228,7 +228,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 (()=>{'use strict';
 const canvas=document.getElementById('tempInkCanvas'),tools=document.getElementById('tempInkTools'),toggle=document.getElementById('tempInkToggle'),ctx=canvas.getContext('2d');
-let mode='pen',active=false,strokes=[],stroke=null,currentKey='',target=null,frame=0;
+let mode='pen',active=false,strokes=[],stroke=null,currentKey='',target=null,frame=0,inkBounds=null,inkW=1,inkH=1;
 const prefix='sefaz-ink-v2:';
 function contentTarget(){
  const reading=document.getElementById('reading');
@@ -246,17 +246,17 @@ function key(el){let h=2166136261;for(const c of identifier(el)){h=Math.imul(h^c
 function save(){if(currentKey)try{localStorage.setItem(currentKey,JSON.stringify(strokes))}catch(e){}}
 function load(){currentKey=key(target);try{let raw=localStorage.getItem(currentKey);if(!raw&&target?.dataset?.id){let h=2166136261;for(const c of (target.textContent||'').slice(0,700))h=Math.imul(h^c.charCodeAt(0),16777619);raw=localStorage.getItem(prefix+(h>>>0).toString(36));if(raw)localStorage.setItem(currentKey,raw)}const v=JSON.parse(raw||'[]');strokes=Array.isArray(v)?v:[]}catch(e){strokes=[]}}
 function dims(){return [Math.max(target.scrollWidth,target.clientWidth),Math.max(target.scrollHeight,target.clientHeight)]}
-function resize(){if(!target)return;const [w,h]=dims(),d=Math.min(devicePixelRatio||1,h>2200?1:1.5);canvas.style.width=w+'px';canvas.style.height=h+'px';canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);draw()}
+function resize(){if(!target)return;const [w,h]=dims(),maxPixels=1800000,d=Math.min(devicePixelRatio||1,h>2200?1:1.5,Math.sqrt(maxPixels/(w*h)));inkW=w;inkH=h;canvas.style.width=w+'px';canvas.style.height=h+'px';canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);draw()}
 function draw(){if(!target)return;const [w,h]=dims();ctx.clearRect(0,0,w,h);for(const st of strokes){if(!st.points?.length)continue;ctx.save();ctx.globalAlpha=st.mode==='mark'?.36:1;ctx.strokeStyle=st.mode==='mark'?'#ffe500':'#ff4f65';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=st.mode==='mark'?22:3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(st.points[0][0]*w,st.points[0][1]*h);if(st.points.length===2){ctx.lineTo(st.points[1][0]*w,st.points[1][1]*h)}else{for(let i=1;i<st.points.length-1;i++){const p=st.points[i],n=st.points[i+1];ctx.quadraticCurveTo(p[0]*w,p[1]*h,(p[0]+n[0])*w/2,(p[1]+n[1])*h/2)}const last=st.points[st.points.length-1];ctx.lineTo(last[0]*w,last[1]*h)}if(st.points.length===1){ctx.arc(st.points[0][0]*w,st.points[0][1]*h,ctx.lineWidth/2,0,Math.PI*2);ctx.fill()}else ctx.stroke();ctx.restore()}}
-function paintSegment(points,from){const [w,h]=dims();ctx.save();ctx.globalAlpha=mode==='mark'?.36:1;ctx.strokeStyle=mode==='mark'?'#ffe500':'#ff4f65';ctx.lineWidth=mode==='mark'?22:3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();const a=points[Math.max(0,from-1)];ctx.moveTo(a[0]*w,a[1]*h);for(let i=from;i<points.length;i++){const p=points[i];ctx.lineTo(p[0]*w,p[1]*h)}ctx.stroke();ctx.restore()}
+function paintSegment(points,from){const w=inkW,h=inkH;ctx.save();ctx.globalAlpha=mode==='mark'?.36:1;ctx.strokeStyle=mode==='mark'?'#ffe500':'#ff4f65';ctx.lineWidth=mode==='mark'?22:3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();const a=points[Math.max(0,from-1)];ctx.moveTo(a[0]*w,a[1]*h);for(let i=from;i<points.length;i++){const p=points[i];ctx.lineTo(p[0]*w,p[1]*h)}ctx.stroke();ctx.restore()}
 function select(m){mode=m;tools.querySelectorAll('[data-ink]').forEach(b=>b.classList.toggle('active',b.dataset.ink===m))}
 function attach(el){if(target===el)return;save();target=el;const position=getComputedStyle(el).position;if(position==='static')el.style.position='relative';el.appendChild(canvas);canvas.style.position='absolute';canvas.style.inset='0 auto auto 0';canvas.style.zIndex='2';canvas.style.display='block';load();resize()}
 function close(){if(!active)return;save();active=false;stroke=null;canvas.style.pointerEvents='none';tools.style.display='none';toggle.style.display='';}
 toggle.onclick=()=>{const el=contentTarget();if(!el)return;attach(el);active=true;canvas.style.pointerEvents='auto';tools.style.display='flex';toggle.style.display='none';select('pen');resize()};
-function point(e){const r=canvas.getBoundingClientRect(),[w,h]=dims();return [(e.clientX-r.left)/w,(e.clientY-r.top)/h]}
-canvas.addEventListener('pointerdown',e=>{if(!active)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);stroke={mode,points:[point(e)]};strokes.push(stroke);draw()});
+function point(e){const r=inkBounds||canvas.getBoundingClientRect();return [(e.clientX-r.left)/inkW,(e.clientY-r.top)/inkH]}
+canvas.addEventListener('pointerdown',e=>{if(!active)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);inkBounds=canvas.getBoundingClientRect();stroke={mode,points:[point(e)]};strokes.push(stroke);paintSegment(stroke.points,0)});
 canvas.addEventListener('pointermove',e=>{if(!stroke)return;e.preventDefault();const samples=e.getCoalescedEvents?.()||[e];const from=stroke.points.length;for(const sample of samples)stroke.points.push(point(sample));if(stroke.points.length>from)paintSegment(stroke.points,from)});
-function end(){if(stroke){draw();save()}stroke=null}canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+function end(){if(stroke){save()}stroke=null;inkBounds=null}canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 tools.querySelectorAll('[data-ink]').forEach(b=>b.onclick=()=>select(b.dataset.ink));
 document.getElementById('tempInkUndo').onclick=()=>{strokes.pop();save();draw()};
 document.getElementById('tempInkClear').onclick=()=>{strokes=[];save();draw()};
