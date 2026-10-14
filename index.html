@@ -228,7 +228,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 (()=>{'use strict';
 const canvas=document.getElementById('tempInkCanvas'),tools=document.getElementById('tempInkTools'),toggle=document.getElementById('tempInkToggle'),ctx=canvas.getContext('2d');
-let mode='pen',active=false,strokes=[],stroke=null,currentKey='',target=null,frame=0,inkBounds=null,inkW=1,inkH=1;
+let mode='pen',active=false,inkPaused=false,strokes=[],stroke=null,currentKey='',target=null,frame=0,inkBounds=null,inkW=1,inkH=1;
 const prefix='sefaz-ink-v2:';
 function contentTarget(){
  const reading=document.getElementById('reading');
@@ -251,10 +251,10 @@ function draw(){if(!target)return;const [w,h]=dims();ctx.clearRect(0,0,w,h);for(
 function paintSegment(points,from){const w=inkW,h=inkH;ctx.save();ctx.globalAlpha=mode==='mark'?.36:1;ctx.strokeStyle=mode==='mark'?'#ffe500':'#ff4f65';ctx.lineWidth=mode==='mark'?22:3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();const a=points[Math.max(0,from-1)];ctx.moveTo(a[0]*w,a[1]*h);for(let i=from;i<points.length;i++){const p=points[i];ctx.lineTo(p[0]*w,p[1]*h)}ctx.stroke();ctx.restore()}
 function select(m){mode=m;tools.querySelectorAll('[data-ink]').forEach(b=>b.classList.toggle('active',b.dataset.ink===m))}
 function attach(el){if(target===el)return;save();target=el;const position=getComputedStyle(el).position;if(position==='static')el.style.position='relative';el.appendChild(canvas);canvas.style.position='absolute';canvas.style.inset='0 auto auto 0';canvas.style.zIndex='2';canvas.style.display='block';load();resize()}
-function close(){if(!active)return;save();active=false;stroke=null;canvas.style.pointerEvents='none';tools.style.display='none';toggle.style.display='';}
-toggle.onclick=()=>{const el=contentTarget();if(!el)return;attach(el);active=true;canvas.style.pointerEvents='auto';tools.style.display='flex';toggle.style.display='none';select('pen');resize()};
+function close(){if(!active)return;save();active=false;inkPaused=false;stroke=null;canvas.style.pointerEvents='none';tools.style.display='none';toggle.style.display='';toggle.style.opacity='1';toggle.setAttribute('aria-pressed','false');}
+toggle.onclick=()=>{if(active){inkPaused=!inkPaused;canvas.style.pointerEvents=inkPaused?'none':'auto';toggle.style.opacity=inkPaused?'.55':'1';toggle.setAttribute('aria-pressed',String(!inkPaused));toggle.title=inkPaused?'Ativar caneta':'Pausar caneta para rolar';if(inkPaused){stroke=null;inkBounds=null;save()}return}const el=contentTarget();if(!el)return;attach(el);active=true;inkPaused=false;canvas.style.pointerEvents='auto';tools.style.display='flex';toggle.style.display='';toggle.setAttribute('aria-pressed','true');toggle.title='Pausar caneta para rolar';select('pen');resize()};
 function point(e){const r=inkBounds||canvas.getBoundingClientRect();return [(e.clientX-r.left)/inkW,(e.clientY-r.top)/inkH]}
-canvas.addEventListener('pointerdown',e=>{if(!active)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);inkBounds=canvas.getBoundingClientRect();stroke={mode,points:[point(e)]};strokes.push(stroke);paintSegment(stroke.points,0)});
+canvas.addEventListener('pointerdown',e=>{if(!active||inkPaused)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);inkBounds=canvas.getBoundingClientRect();stroke={mode,points:[point(e)]};strokes.push(stroke);paintSegment(stroke.points,0)});
 canvas.addEventListener('pointermove',e=>{if(!stroke)return;e.preventDefault();const samples=e.getCoalescedEvents?.()||[e];const from=stroke.points.length;for(const sample of samples)stroke.points.push(point(sample));if(stroke.points.length>from)paintSegment(stroke.points,from)});
 function end(){if(stroke){save()}stroke=null;inkBounds=null}canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 tools.querySelectorAll('[data-ink]').forEach(b=>b.onclick=()=>select(b.dataset.ink));
