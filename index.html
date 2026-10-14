@@ -279,7 +279,7 @@ const cancel=document.createElement('button');cancel.textContent='Cancelar';
 const save=document.createElement('button');save.textContent='Salvar em Anotações';
 for(const b of [cancel,save])b.style.cssText='padding:12px;border-radius:8px;flex:1';
 cancel.onclick=()=>overlay.remove();
-save.onclick=()=>{const value=body.value.trim();if(!value){body.focus();return}try{const key='sefaz-al-notes-v1';let notes=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(notes))notes=[];const now=new Date().toISOString();notes.unshift({id:'n'+Date.now(),title:title.value.trim(),text:value,subject:'',lesson:'',question:null,created:now,updated:now,origin:'quick-note'});localStorage.setItem(key,JSON.stringify(notes));overlay.remove();alert('Anotação salva em Anotações')}catch(e){alert('Não foi possível salvar a anotação: '+e.message)}};
+save.onclick=()=>{const value=body.value.trim();if(!value){body.focus();return}try{const key='sefaz-al-notes-v1';let notes=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(notes))notes=[];const now=new Date().toISOString();notes.unshift({id:'n'+Date.now(),title:title.value.trim(),text:value,subject:'',lesson:'',question:null,created:now,updated:now,origin:'quick-note'});localStorage.setItem(key,JSON.stringify(notes));overlay.remove()}catch(e){alert('Não foi possível salvar a anotação: '+e.message)}};
 actions.append(cancel,save);panel.append(title,body,actions);overlay.append(panel);overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});document.body.append(overlay);body.focus();
 });
 })();
