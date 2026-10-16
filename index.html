@@ -228,6 +228,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <div id="tempInkTools" role="toolbar" aria-label="Ferramentas temporarias">
 <button type="button" data-ink="pen">✏️ Caneta</button><button type="button" data-ink="mark">🖍️ Marca</button><button type="button" id="tempInkUndo">↶</button><button type="button" data-ink="erase" title="Apagar riscos tocados">🧽 Borracha</button><button type="button" id="tempInkClose">✕</button>
 </div>
+<script src="./ink-store.js?v=1"></script>
 <script>
 (()=>{'use strict';
 const canvas=document.getElementById('tempInkCanvas'),tools=document.getElementById('tempInkTools'),toggle=document.getElementById('tempInkToggle'),ctx=canvas.getContext('2d');
@@ -246,8 +247,8 @@ function contentTarget(){
 }
 function identifier(el){if(el.closest?.('#readingBody')){const label=el.querySelector('small')?.textContent||el.closest('#reading')?.querySelector('#readingBody small')?.textContent||'';return 'reading-lesson|'+label}if(el.id==='reading'){const x=el.querySelector('.readingContent,.readingText,.readingArticle,.readingBody');return 'reading|'+(x?.textContent||el.textContent).slice(0,600)}return el.dataset.id?'question|'+el.dataset.id:(el.getAttribute('data-question-id')||el.textContent||el.id).slice(0,700)}
 function key(el){let h=2166136261;for(const c of identifier(el)){h=Math.imul(h^c.charCodeAt(0),16777619)}return prefix+(h>>>0).toString(36)}
-function save(){if(currentKey)try{localStorage.setItem(currentKey,JSON.stringify(strokes))}catch(e){}}
-function load(){currentKey=key(target);try{let raw=localStorage.getItem(currentKey);if(!raw&&target?.dataset?.id){let h=2166136261;for(const c of (target.textContent||'').slice(0,700))h=Math.imul(h^c.charCodeAt(0),16777619);raw=localStorage.getItem(prefix+(h>>>0).toString(36));if(raw)localStorage.setItem(currentKey,raw)}const v=JSON.parse(raw||'[]');strokes=Array.isArray(v)?v:[]}catch(e){strokes=[]}}
+function save(){if(!currentKey)return;const k=currentKey,data=JSON.parse(JSON.stringify(strokes));window.sefazInkStore.put(k,data).catch(e=>console.warn('Falha ao salvar desenho',e))}
+async function load(){const k=key(target);currentKey=k;try{const data=await window.sefazInkStore.get(k);if(currentKey!==k)return;strokes=Array.isArray(data)?data:[];resize()}catch(e){console.warn('Falha ao carregar desenho',e);strokes=[]}}
 function dims(){return [Math.max(target.scrollWidth,target.clientWidth),Math.max(target.scrollHeight,target.clientHeight)]}
 function resize(){if(!target)return;const [w,h]=dims(),maxPixels=1800000,d=Math.min(devicePixelRatio||1,h>2200?1:1.5,Math.sqrt(maxPixels/(w*h)));inkW=w;inkH=h;canvas.style.width=w+'px';canvas.style.height=h+'px';canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);draw()}
 function draw(){if(!target)return;const [w,h]=dims();ctx.clearRect(0,0,w,h);for(const st of strokes){if(!st.points?.length)continue;ctx.save();ctx.globalAlpha=st.mode==='mark'?.36:1;ctx.strokeStyle=st.mode==='mark'?'#ffe500':'#ff4f65';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=st.mode==='mark'?22:5;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(st.points[0][0]*w,st.points[0][1]*h);if(st.points.length===2){ctx.lineTo(st.points[1][0]*w,st.points[1][1]*h)}else{for(let i=1;i<st.points.length-1;i++){const p=st.points[i],n=st.points[i+1];ctx.quadraticCurveTo(p[0]*w,p[1]*h,(p[0]+n[0])*w/2,(p[1]+n[1])*h/2)}const last=st.points[st.points.length-1];ctx.lineTo(last[0]*w,last[1]*h)}if(st.points.length===1){ctx.arc(st.points[0][0]*w,st.points[0][1]*h,ctx.lineWidth/2,0,Math.PI*2);ctx.fill()}else ctx.stroke();ctx.restore()}}
