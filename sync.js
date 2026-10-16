@@ -9,7 +9,18 @@ function el(id){return document.getElementById(id)}
 function status(message){if(el('syncStatus'))el('syncStatus').textContent=message}
 function headers(token){return {'apikey':KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'}}
 function parse(v,fallback){try{return JSON.parse(v)||fallback}catch(e){return fallback}}
-function safeBackup(data){try{const history=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');history.push({date:new Date().toISOString(),data});while(history.length>2)history.shift();localStorage.setItem(BACKUP_KEY,JSON.stringify(history));return true}catch(e){return false}}
+async function safeBackup(data){
+ const record={date:new Date().toISOString(),data};
+ if(typeof indexedDB!=='undefined'){
+  try{await new Promise((resolve,reject)=>{
+   const open=indexedDB.open('sefaz-sync-safety',1);
+   open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains('copies'))open.result.createObjectStore('copies',{keyPath:'id',autoIncrement:true})};
+   open.onerror=()=>reject(open.error);
+   open.onsuccess=()=>{const db=open.result;const tx=db.transaction('copies','readwrite');const store=tx.objectStore('copies');store.add(record);const keys=store.getAllKeys();keys.onsuccess=()=>{const ids=keys.result||[];for(const id of ids.slice(0,Math.max(0,ids.length-3)))store.delete(id)};tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error)}}
+  });return true}catch(e){console.warn('Backup IndexedDB falhou',e)}
+ }
+ try{const history=parse(localStorage.getItem(BACKUP_KEY),[]);history.push(record);while(history.length>2)history.shift();localStorage.setItem(BACKUP_KEY,JSON.stringify(history));return true}catch(e){console.warn('Backup local falhou',e);return false}
+}
 function inkData(){const out={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('sefaz-ink-v2:')){const strokes=parse(localStorage.getItem(k),[]);if(Array.isArray(strokes)&&strokes.length)out[k]=strokes}}return out}
 function localData(){const out={};for(const k of TRACKED)out[k]=parse(localStorage.getItem(k),k==='sefaz-al-notes-v1'?[]:{});out.ink=inkData();return out}
 function merge(a,b){const result={...a};for(const k of TRACKED){const x=a[k],y=b[k];if(k==='sefaz-al-shorts'){const left=x&&typeof x==='object'?x:{},right=y&&typeof y==='object'?y:{};result[k]={...right,...left,ans:{...(right.ans||{}),...(left.ans||{})},fav:{...(right.fav||{}),...(left.fav||{})},qs:[...(right.qs||[]),...(left.qs||[])].filter((q,i,arr)=>q&&arr.findIndex(z=>z&&String(z.id)===String(q.id))===i)}}else if(k==='sefaz-al-notes-v1'){const byId=new Map();for(const n of [...(Array.isArray(y)?y:[]),...(Array.isArray(x)?x:[])])if(n&&n.id){const prev=byId.get(n.id);if(!prev||String(n.updated||n.created||'')>=String(prev.updated||prev.created||''))byId.set(n.id,n)}result[k]=[...byId.values()]}else result[k]={...(y||{}),...(x||{})}}const ink={...(b.ink||{})};for(const [key,strokes] of Object.entries(a.ink||{})){if(!Array.isArray(strokes)||!strokes.length)continue;const existing=ink[key];if(!Array.isArray(existing)||!existing.length)ink[key]=strokes;else if(JSON.stringify(existing)!==JSON.stringify(strokes)){const seen=new Set(existing.map(v=>JSON.stringify(v)));ink[key]=existing.concat(strokes.filter(v=>{const id=JSON.stringify(v);if(seen.has(id))return false;seen.add(id);return true}))}}result.ink=ink;return result}
@@ -19,8 +30,8 @@ function updateUI(){const logged=!!session;el('syncLogin').hidden=logged;el('syn
 async function sync(){if(!session||busy||!navigator.onLine)return;busy=true;status('Sincronizando...');try{await refresh();const h=headers(session.access_token);const rows=await request(REST+'?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=payload,updated_at',{headers:h});const remote=rows[0]?.payload||{},local=localData(),merged=merge(local,remote);
 const remoteString=JSON.stringify(remote),mergedString=JSON.stringify(merged);
 const latest=await request(REST+'?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=updated_at',{headers:h});if((latest[0]?.updated_at||null)!==(rows[0]?.updated_at||null))throw Error('Dados atualizados em outro aparelho. Sincronize novamente.');
-if(mergedString!==remoteString){if(!safeBackup(local))throw Error('Backup local indisponível. Sincronização suspensa.');await request(REST+'?on_conflict=user_id',{method:'POST',headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,payload:merged,updated_at:new Date().toISOString()})})}
-if(mergedString!==JSON.stringify(local)&&!safeBackup(local))throw Error('Backup local indisponível. Sincronização suspensa.');
+if(mergedString!==remoteString){if(!(await safeBackup(local)))throw Error('Backup local indisponível. Sincronização suspensa.');await request(REST+'?on_conflict=user_id',{method:'POST',headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,payload:merged,updated_at:new Date().toISOString()})})}
+if(mergedString!==JSON.stringify(local)&&!(await safeBackup(local)))throw Error('Backup local indisponível. Sincronização suspensa.');
 for(const k of TRACKED){if(JSON.stringify(local[k])!==JSON.stringify(merged[k]))localStorage.setItem(k,JSON.stringify(merged[k]))}
 if(JSON.stringify(local['sefaz-al-shorts'])!==JSON.stringify(merged['sefaz-al-shorts'])&&typeof st!=='undefined'){st.ans=merged['sefaz-al-shorts'].ans||{};st.fav=merged['sefaz-al-shorts'].fav||{};if(typeof render==='function')render()}
 let inkUpdated=false;for(const [key,strokes] of Object.entries(merged.ink||{})){if(!key.startsWith('sefaz-ink-v2:')||!Array.isArray(strokes))continue;const previous=localStorage.getItem(key);const next=JSON.stringify(strokes);if(previous!==next){localStorage.setItem(key,next);inkUpdated=true}}if(inkUpdated)window.dispatchEvent(new Event('sefaz:sync-ink'));
