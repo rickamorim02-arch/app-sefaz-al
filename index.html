@@ -63,7 +63,7 @@ init();
  const loaded=new Map();
  function load(id,src){if(loaded.has(id))return loaded.get(id);const old=document.getElementById(id);if(old)return Promise.resolve();const p=new Promise((resolve,reject)=>{const s=document.createElement('script');s.id=id;s.src=src;s.async=true;s.onload=resolve;s.onerror=reject;document.body.appendChild(s)});loaded.set(id,p);return p}
  window.sefazLoadFeature=function(name){
-  if(name==='reading')return load('readingModule','reading.js?v=75');
+  if(name==='reading')return load('readingModule','reading.js?v=76');
   if(name==='dictionary')return load('dictionaryModule','dictionary.js?v=70');
   return Promise.resolve()
  };
