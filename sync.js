@@ -2,7 +2,7 @@
 'use strict';
 const URL='https://pdhnsmozkqqsroulocxc.supabase.co',KEY='sb_publishable_obXaIW-V8t2lqAvOl0LKKA_f1OFiWwP';
 const AUTH=URL+'/auth/v1',REST=URL+'/rest/v1/sefaz_sync';
-const SESSION_KEY='sefaz-sync-session-v1',TRACKED=['sefaz-al-shorts','sefaz-al-notes-v1','sefaz-reading-checked-v1'];
+const SESSION_KEY='sefaz-sync-session-v1',TRACKED=['sefaz-al-shorts','sefaz-al-notes-v1','sefaz-reading-checked-v1','sefaz-reading-second-v1'];
 let session=null,busy=false,timer=null,dirty=false,lastSnapshot='',lastRemote='';
 const BACKUP_KEY='sefaz-sync-safety-v1';
 function el(id){return document.getElementById(id)}
