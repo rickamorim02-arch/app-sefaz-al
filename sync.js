@@ -18,6 +18,7 @@ async function refresh(){if(!session)return false;if(Date.now()/1000 < (session.
 function updateUI(){const logged=!!session;el('syncLogin').hidden=logged;el('syncLogged').hidden=!logged;if(logged)el('syncUser').textContent=session.user?.email||'Conta conectada'}
 async function sync(){if(!session||busy||!navigator.onLine)return;busy=true;status('Sincronizando...');try{await refresh();const h=headers(session.access_token);const rows=await request(REST+'?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=payload,updated_at',{headers:h});const remote=rows[0]?.payload||{},local=localData(),merged=merge(local,remote);
 const remoteString=JSON.stringify(remote),mergedString=JSON.stringify(merged);
+const latest=await request(REST+'?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=updated_at',{headers:h});if((latest[0]?.updated_at||null)!==(rows[0]?.updated_at||null))throw Error('Dados atualizados em outro aparelho. Sincronize novamente.');
 if(mergedString!==remoteString){if(!safeBackup(local))throw Error('Backup local indisponível. Sincronização suspensa.');await request(REST+'?on_conflict=user_id',{method:'POST',headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,payload:merged,updated_at:new Date().toISOString()})})}
 if(mergedString!==JSON.stringify(local)&&!safeBackup(local))throw Error('Backup local indisponível. Sincronização suspensa.');
 for(const k of TRACKED){if(JSON.stringify(local[k])!==JSON.stringify(merged[k]))localStorage.setItem(k,JSON.stringify(merged[k]))}
