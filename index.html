@@ -228,7 +228,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <div id="tempInkTools" role="toolbar" aria-label="Ferramentas temporarias">
 <button type="button" data-ink="pen">✏️ Caneta</button><button type="button" data-ink="mark">🖍️ Marca</button><button type="button" id="tempInkUndo">↶</button><button type="button" data-ink="erase" title="Apagar riscos tocados">🧽 Borracha</button><button type="button" id="tempInkClose">✕</button>
 </div>
-<script src="./ink-store.js?v=1"></script>
+<script src="./ink-store.js?v=2"></script>
 <script>
 (()=>{'use strict';
 const canvas=document.getElementById('tempInkCanvas'),tools=document.getElementById('tempInkTools'),toggle=document.getElementById('tempInkToggle'),ctx=canvas.getContext('2d');
@@ -260,12 +260,12 @@ function attach(el){if(target===el)return;save();target=el;const position=getCom
 function close(){if(!active)return;save();active=false;inkPaused=false;stroke=null;canvas.style.pointerEvents='none';tools.style.display='none';toggle.style.display='';toggle.style.opacity='1';toggle.setAttribute('aria-pressed','false');}
 toggle.onclick=()=>{if(active){inkPaused=!inkPaused;canvas.style.pointerEvents=inkPaused?'none':'auto';syncPenButton();toggle.setAttribute('aria-pressed',String(!inkPaused));toggle.title=inkPaused?'Ativar caneta':'Pausar caneta para rolar';if(inkPaused){stroke=null;inkBounds=null;save()}return}const el=contentTarget();if(!el)return;attach(el);active=true;inkPaused=false;canvas.style.pointerEvents='auto';tools.style.display='flex';toggle.style.display='';toggle.setAttribute('aria-pressed','true');toggle.title='Pausar caneta para rolar';select('pen');resize()};
 function point(e){const r=inkBounds||canvas.getBoundingClientRect();return [(e.clientX-r.left)/inkW,(e.clientY-r.top)/inkH]}
-function eraseAt(p){const px=p[0]*inkW,py=p[1]*inkH,radius=19;let changed=false;strokes=strokes.filter(st=>{const pts=st.points||[];let hit=false;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[Math.min(i+1,pts.length-1)];const ax=a[0]*inkW,ay=a[1]*inkH,bx=b[0]*inkW,by=b[1]*inkH,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(px-ax-t*dx,py-ay-t*dy)<radius){hit=true;break}}if(hit)changed=true;return !hit});if(changed){save();draw()}}
+function eraseAt(p){const px=p[0]*inkW,py=p[1]*inkH,radius=19;let changed=false;strokes=strokes.filter(st=>{const pts=st.points||[];let hit=false;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[Math.min(i+1,pts.length-1)];const ax=a[0]*inkW,ay=a[1]*inkH,bx=b[0]*inkW,by=b[1]*inkH,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(px-ax-t*dx,py-ay-t*dy)<radius){hit=true;break}}if(hit){changed=true;window.sefazInkStore.markDeleted(currentKey,[st])}return !hit});if(changed){save();draw()}}
 canvas.addEventListener('pointerdown',e=>{if(!active||inkPaused)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);inkBounds=canvas.getBoundingClientRect();if(mode==='erase'){eraseAt(point(e));return}stroke={mode,points:[point(e)]};strokes.push(stroke);if(mode==='mark')draw();else paintSegment(stroke.points,0)});
 canvas.addEventListener('pointermove',e=>{if(mode==='erase'&&active&&!inkPaused&&canvas.hasPointerCapture(e.pointerId)){e.preventDefault();eraseAt(point(e));return}if(!stroke)return;e.preventDefault();const samples=e.getCoalescedEvents?.()||[e];const from=stroke.points.length;for(const sample of samples)stroke.points.push(point(sample));if(stroke.points.length>from){if(stroke.mode==='mark')draw();else paintSegment(stroke.points,from)}});
 function end(){if(stroke){save()}stroke=null;inkBounds=null}canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 tools.querySelectorAll('[data-ink]').forEach(b=>b.onclick=()=>{if(b.dataset.ink==='pen'&&mode==='pen'&&active){pauseInk()}else select(b.dataset.ink)});
-document.getElementById('tempInkUndo').onclick=()=>{strokes.pop();save();draw()};
+document.getElementById('tempInkUndo').onclick=()=>{const removed=strokes.pop();if(removed)window.sefazInkStore.markDeleted(currentKey,[removed]);save();draw()};
 
 document.getElementById('tempInkClose').onclick=close;
 addEventListener('resize',()=>{if(target)resize()});
