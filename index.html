@@ -267,6 +267,7 @@ document.getElementById('tempInkUndo').onclick=()=>{strokes.pop();save();draw()}
 document.getElementById('tempInkClear').onclick=()=>{strokes=[];save();draw()};
 document.getElementById('tempInkClose').onclick=close;
 addEventListener('resize',()=>{if(target)resize()});
+window.addEventListener('sefaz:sync-ink',()=>{if(!target||!active)return;save();load();resize()});
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{close();if(target){canvas.remove();target=null;currentKey=''}}));
 const observer=new MutationObserver(()=>{if(!target)return;if(!target.isConnected||target.classList.contains('hidden')||target.closest('.hidden')){close();canvas.remove();target=null;currentKey='';return}if(active&&document.getElementById('reading')&&!document.getElementById('reading').classList.contains('hidden')){const next=contentTarget();if(next&&next!==target)attach(next)}});
 observer.observe(document.querySelector('.app'),{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
