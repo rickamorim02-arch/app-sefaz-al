@@ -189,7 +189,14 @@ async function makeZip(){const status=$('bookRecStatus');status.textContent='Mon
 async function render(){urls.forEach(u=>URL.revokeObjectURL(u));urls=[];const root=$('bookItems');if(!root)return;root.innerHTML=data.items.length?data.items.map(x=>'<div class="card"><b>'+escapeHtml(x.name)+'</b><audio controls data-player="'+x.id+'"></audio><input data-title="'+x.id+'" placeholder="Título" value="'+escapeHtml(x.title)+'"><textarea rows="5" data-text="'+x.id+'" placeholder="Observação opcional">'+escapeHtml(x.text)+'</textarea><div class="bookrow"><button data-save="'+x.id+'">Salvar texto</button><button data-delete="'+x.id+'">Excluir</button></div></div>').join(''):'<p class="muted">Nenhuma gravação.</p>';for(const x of data.items){try{const blob=await audioOp('get',x.id);if(blob){const u=URL.createObjectURL(blob);urls.push(u);const player=root.querySelector('[data-player="'+x.id+'"]');if(player)player.src=u}}catch(e){console.warn(e)}}root.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{const id=b.dataset.save,x=data.items.find(i=>i.id===id);x.title=root.querySelector('[data-title="'+id+'"]').value;x.text=root.querySelector('[data-text="'+id+'"]').value;save()});root.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Excluir gravação deste aparelho?'))return;const id=b.dataset.delete;await audioOp('delete',id);data.items=data.items.filter(i=>i.id!==id);save()});}
 $('bookRecord').onclick=record;$('bookImportBtn').onclick=()=>$('bookFile').click();$('bookZip').onclick=()=>makeZip().catch(e=>$('bookRecStatus').textContent='Falha ao criar ZIP: '+e.message);$('bookFile').onchange=async e=>{try{if(e.target.files[0])await add(e.target.files[0],e.target.files[0].name)}catch(err){alert('Falha ao importar: '+err.message)}e.target.value=''};window.addEventListener('sefaz:book-updated',()=>{data=JSON.parse(localStorage.getItem(KEY)||'{}');data.items ||= [];render()});render();
 })();</script>
-<script src="./book-merge.js?v=1"></script>
+<style>
+#bookMergePanel,#bookMergeList,#bookMergeOrder{min-width:0;max-width:100%;box-sizing:border-box}
+#bookMergeList input[type="checkbox"]{width:22px!important;min-width:22px!important;max-width:22px!important;height:22px!important;margin:0!important;justify-self:start;flex:none!important}
+#bookMergeList>div,#bookMergeOrder>div{max-width:100%;min-width:0}
+#bookMergeOrder button{width:38px!important;min-width:38px!important;padding:7px!important}
+#bookMergeName{display:block;width:100%;max-width:100%;box-sizing:border-box}
+</style>
+<script src="./book-merge.js?v=2"></script>
 <script>
 /* v138: cronômetro regressivo independente, com pausa e ajuste */
 (function(){
