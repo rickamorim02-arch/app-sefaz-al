@@ -255,7 +255,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #tempInkTools{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(91px + env(safe-area-inset-bottom));z-index:1402;display:none;gap:5px;align-items:center;background:#102b49;border:1px solid #75c9ff;border-radius:16px;padding:8px;max-width:96vw;box-shadow:0 5px 25px #000b}
 #tempInkTools button{background:#173e61;border:1px solid #416a89;border-radius:9px;color:white;padding:10px 8px;font-size:12px;white-space:nowrap}
 #tempInkTools button.active{background:#ffd52e;color:#061a33;font-weight:900}#tempInkTools button[data-ink="pen"]{min-width:110px}
-#tempInkCanvas{position:absolute;inset:0 auto auto 0;width:100%;height:100%;z-index:1400;display:none;touch-action:pan-y;pointer-events:auto}
+#tempInkCanvas{position:absolute;inset:0 auto auto 0;width:100%;height:100%;z-index:1400;display:none;touch-action:none;pointer-events:auto}
 </style>
 <button type="button" id="tempInkToggle" aria-label="Abrir caneta e marca-texto" title="Anotacoes temporarias">✏️</button>
 <canvas id="tempInkCanvas" aria-label="Area de anotacao temporaria"></canvas>
