@@ -1,0 +1,30 @@
+(()=>{'use strict';
+const KEY='sefaz-reading-pins-v1',get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+let armed=false,drag=null;
+const css=document.createElement('style');css.textContent=`
+#readingPinToggle{position:fixed;right:15px;bottom:225px;z-index:1510;background:#ffdb39;color:#09213b;border:2px solid #fff;border-radius:30px;padding:10px 13px;font-weight:800;box-shadow:0 3px 12px #0008}
+#readingPinToggle.on{background:#7ce7f4}
+#readingBody .card{position:relative}
+.reading-pin{position:absolute;z-index:12;border:2px solid #fff;border-radius:50%;width:39px;height:39px;background:#ffda39;color:#09213b;box-shadow:0 2px 9px #0009;touch-action:none;font-size:21px;display:grid;place-items:center;padding:0}
+#readingPinDialog{position:fixed;inset:0;z-index:3500;background:#000a;display:none;align-items:center;justify-content:center;padding:15px}
+#readingPinDialog.open{display:flex}
+#readingPinDialog>div{width:min(100%,550px);background:#102d4c;color:white;padding:18px;border-radius:16px;border:1px solid #71cfff;box-sizing:border-box}
+#readingPinDialog textarea{width:100%;min-height:145px;box-sizing:border-box;background:#061a30;color:white;font:inherit;font-size:18px;padding:12px}
+#readingPinDialog button{padding:10px;margin:8px 5px 0 0}
+`;document.head.appendChild(css);
+const btn=document.createElement('button');btn.id='readingPinToggle';btn.type='button';btn.textContent='📌 Nota';btn.onclick=()=>{armed=!armed;btn.classList.toggle('on',armed);btn.textContent=armed?'📌 Toque no texto':'📌 Nota'};document.body.appendChild(btn);
+const dialog=document.createElement('div');dialog.id='readingPinDialog';dialog.innerHTML='<div><h3>📌 Anotação da aula</h3><textarea id="readingPinText" placeholder="Escreva sua anotação"></textarea><div><button id="readingPinSave">Salvar</button><button id="readingPinDelete">Excluir</button><button id="readingPinCancel">Cancelar</button></div></div>';document.body.appendChild(dialog);
+let edit=null;
+function lesson(){const c=document.querySelector('#readingBody>.card');if(!c||document.getElementById('reading')?.classList.contains('hidden'))return null;const title=c.querySelector('small')?.textContent||c.querySelector('h2')?.textContent||'';return {card:c,id:title.trim()}}
+function persist(data){localStorage.setItem(KEY,JSON.stringify(data))}
+function open(item){edit=item;document.getElementById('readingPinText').value=item.text||'';dialog.classList.add('open');document.getElementById('readingPinText').focus()}
+function close(){dialog.classList.remove('open');edit=null}
+function render(){const l=lesson();btn.style.display=l?'block':'none';document.querySelectorAll('.reading-pin').forEach(n=>n.remove());if(!l)return;for(const item of Object.values(get()).filter(n=>n.lesson===l.id&&!n.deleted)){const b=document.createElement('button');b.className='reading-pin';b.textContent='📝';b.title='Abrir anotação; arraste para mover';b.style.left=(item.x*100)+'%';b.style.top=(item.y*100)+'%';b.dataset.id=item.id;l.card.appendChild(b);
+let start=null,moved=false;b.addEventListener('pointerdown',e=>{e.stopPropagation();start={x:e.clientX,y:e.clientY};moved=false;b.setPointerCapture(e.pointerId)});b.addEventListener('pointermove',e=>{if(!start)return;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>7)moved=true;if(!moved)return;const rect=l.card.getBoundingClientRect();b.style.left=(Math.max(0,Math.min(.94,(e.clientX-rect.left)/rect.width))*100)+'%';b.style.top=(Math.max(0,Math.min(.98,(e.clientY-rect.top)/rect.height))*100)+'%'});b.addEventListener('pointerup',e=>{if(!start)return;start=null;if(moved){const d=get(),rect=l.card.getBoundingClientRect();d[item.id]={...item,x:Math.max(0,Math.min(.94,(e.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(.98,(e.clientY-rect.top)/rect.height)),updated:new Date().toISOString()};persist(d)}else open(item)});b.addEventListener('pointercancel',()=>{start=null})}}
+document.getElementById('readingPinSave').onclick=()=>{if(!edit)return;const text=document.getElementById('readingPinText').value.trim();if(!text)return;const d=get(),now=new Date().toISOString();d[edit.id]={...edit,text,updated:now};persist(d);close();render()};
+document.getElementById('readingPinDelete').onclick=()=>{if(!edit)return;const d=get();d[edit.id]={...edit,deleted:true,updated:new Date().toISOString()};persist(d);close();render()};
+document.getElementById('readingPinCancel').onclick=close;
+document.getElementById('readingBody')?.addEventListener('click',e=>{if(!armed||e.target.closest('.reading-pin'))return;const l=lesson();if(!l||!l.card.contains(e.target))return;const r=l.card.getBoundingClientRect();armed=false;btn.classList.remove('on');btn.textContent='📌 Nota';open({id:'pin-'+Date.now()+'-'+Math.random().toString(36).slice(2),lesson:l.id,x:Math.max(0,Math.min(.94,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(.98,(e.clientY-r.top)/r.height)),created:new Date().toISOString()})},true);
+const observer=new MutationObserver(()=>{if(!dialog.classList.contains('open'))render()});const body=document.getElementById('readingBody');if(body)observer.observe(body,{childList:true});document.addEventListener('sefaz:navigate',()=>setTimeout(render,100));window.addEventListener('storage',e=>{if(e.key===KEY)render()});window.addEventListener('sefaz:sync-pins',render);setTimeout(render,500);
+window.sefazReadingPins={render};
+})();
