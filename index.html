@@ -255,7 +255,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #tempInkTools{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(91px + env(safe-area-inset-bottom));z-index:1402;display:none;gap:5px;align-items:center;background:#102b49;border:1px solid #75c9ff;border-radius:16px;padding:8px;max-width:96vw;box-shadow:0 5px 25px #000b}
 #tempInkTools button{background:#173e61;border:1px solid #416a89;border-radius:9px;color:white;padding:10px 8px;font-size:12px;white-space:nowrap}
 #tempInkTools button.active{background:#ffd52e;color:#061a33;font-weight:900}#tempInkTools button[data-ink="pen"]{min-width:110px}
-#tempInkCanvas{position:absolute;inset:0 auto auto 0;width:100%;height:100%;z-index:1400;display:none;touch-action:none;pointer-events:auto}
+#tempInkCanvas{position:absolute;inset:0 auto auto 0;width:100%;height:100%;z-index:1400;display:none;touch-action:pan-y;pointer-events:auto}
 </style>
 <button type="button" id="tempInkToggle" aria-label="Abrir caneta e marca-texto" title="Anotacoes temporarias">✏️</button>
 <canvas id="tempInkCanvas" aria-label="Area de anotacao temporaria"></canvas>
@@ -299,8 +299,8 @@ function point(e){const r=inkBounds||canvas.getBoundingClientRect();return [(e.c
 function eraseAt(p){const px=p[0]*inkW,py=p[1]*inkH,radius=19;let changed=false;strokes=strokes.filter(st=>{const pts=st.points||[];let hit=false;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[Math.min(i+1,pts.length-1)];const ax=a[0]*inkW,ay=a[1]*inkH,bx=b[0]*inkW,by=b[1]*inkH,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(px-ax-t*dx,py-ay-t*dy)<radius){hit=true;break}}if(hit){changed=true;window.sefazInkStore.markDeleted(currentKey,[st])}return !hit});if(changed){save();draw()}}
 let lastPointerId=null;
 function addPoint(e){if(!stroke)return;const p=point(e),pts=stroke.points,last=pts[pts.length-1];if(!Number.isFinite(p[0])||!Number.isFinite(p[1]))return;if(!last){pts.push(p);paintSegment(pts,0);return}const dx=(p[0]-last[0])*inkW,dy=(p[1]-last[1])*inkH;if(Math.hypot(dx,dy)<0.25)return;const from=pts.length;pts.push(p);paintSegment(pts,from)}
-canvas.addEventListener('pointerdown',e=>{if(!active||inkPaused||lastPointerId!==null)return;e.preventDefault();try{canvas.setPointerCapture(e.pointerId)}catch(_){}inkBounds=canvas.getBoundingClientRect();lastPointerId=e.pointerId;if(mode==='erase'){eraseAt(point(e));return}stroke={mode,points:[]};strokes.push(stroke);addPoint(e)});
-function moveInk(e){if(!active||inkPaused||lastPointerId!==e.pointerId)return;e.preventDefault();if(mode==='erase'){eraseAt(point(e));return}const events=e.getCoalescedEvents?.();if(events?.length){for(const sample of events)addPoint(sample)}addPoint(e)}
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||!active||inkPaused||lastPointerId!==null)return;e.preventDefault();try{canvas.setPointerCapture(e.pointerId)}catch(_){}inkBounds=canvas.getBoundingClientRect();lastPointerId=e.pointerId;if(mode==='erase'){eraseAt(point(e));return}stroke={mode,points:[]};strokes.push(stroke);addPoint(e)});
+function moveInk(e){if(e.pointerType==='touch'||!active||inkPaused||lastPointerId!==e.pointerId)return;e.preventDefault();if(mode==='erase'){eraseAt(point(e));return}const events=e.getCoalescedEvents?.();if(events?.length){for(const sample of events)addPoint(sample)}addPoint(e)}
 canvas.addEventListener('pointermove',moveInk,{passive:false});
 function end(e){if(lastPointerId!==e.pointerId)return;if(stroke){if(e.type==='pointerup')addPoint(e);const completed=stroke;stroke=null;if(completed.points.length===0)strokes=strokes.filter(x=>x!==completed);save();if(pendingInkResize){pendingInkResize=false;resize()}}lastPointerId=null;inkBounds=null}
 canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);canvas.addEventListener('lostpointercapture',end);
