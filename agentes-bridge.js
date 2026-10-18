@@ -12,14 +12,17 @@
       return {id, subject: q.s || 'Geral', topic: q.t || 'Geral', correct: String(selected).trim().toUpperCase() === String(q.r || '').trim().charAt(0).toUpperCase()};
     }).filter(Boolean);
   }
+  let authorized = false;
+  let activeTimer = null;
   window.addEventListener('message', event => {
     if (event.origin !== allowedOrigin || !event.source || !event.data || event.data.type !== 'SEFAZ_BRIDGE_REQUEST_V1') return;
-    if (!confirm('Permitir que o Agentes IA consulte seus acertos e erros dos Shorts nesta sessão?')) return;
+    if (!authorized) { if (!confirm('Permitir que o Agentes IA consulte seus acertos e erros dos Shorts nesta sessão?')) return; authorized = true; }
+    if (activeTimer) { clearInterval(activeTimer); activeTimer = null; }
     const send = () => {
       if (event.source.closed) return;
       event.source.postMessage({type:'SEFAZ_BRIDGE_DATA_V1', rows:data()}, allowedOrigin);
     };
     send();
-    const timer = setInterval(() => { if (event.source.closed) clearInterval(timer); else send(); }, 5000);
+    activeTimer = setInterval(() => { if (event.source.closed) { clearInterval(activeTimer); activeTimer = null; } else send(); }, 5000);
   });
 })();
