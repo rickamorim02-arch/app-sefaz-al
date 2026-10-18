@@ -1,1 +1,0 @@
-/* Integração desativada por solicitação do usuário. */
