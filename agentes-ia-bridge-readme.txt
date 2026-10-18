@@ -1,0 +1,1 @@
+Integração local de leitura com o aplicativo Agentes IA SEFAZ-AL. Nenhuma alteração de dados do usuário.
