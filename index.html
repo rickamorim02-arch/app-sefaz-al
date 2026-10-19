@@ -63,6 +63,7 @@ var S=["Segurança da Informação e Redes","Auditoria Fiscal","Contabilidade Ge
 let shortsOrder=localStorage.getItem('sefaz-shorts-order-v1')==='random'?'random':'sequential';
 function setShortsOrder(value){shortsOrder=value==='random'?'random':'sequential';localStorage.setItem('sefaz-shorts-order-v1',shortsOrder);resetFeedOrder();window.sefazFeedOffset=0;updateShortsOrderButtons();render()}
 function updateShortsOrderButtons(){document.querySelectorAll('[data-shorts-order]').forEach(b=>{const selected=b.dataset.shortsOrder===shortsOrder;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))})}
+const feed=document.getElementById('feed');
 let feedMode='pending';var st=JSON.parse(localStorage.getItem('sefaz-al-shorts')||'null')||{qs:[],ans:{},fav:{},bankVersion:0};st.ans=st.ans||{};st.fav=st.fav||{};st.qs=st.qs||[];
 function save(){try{var custom=(st.qs||[]).filter(function(x){return String(x.id).startsWith('u')});localStorage.setItem('sefaz-al-shorts',JSON.stringify({qs:custom,ans:st.ans||{},fav:st.fav||{},bankVersion:st.bankVersion||0,bankUpdated:st.bankUpdated||''}))}catch(e){console.warn('Falha ao salvar progresso',e)}}
 function buildValidated5000(all){
@@ -266,15 +267,16 @@ function navigate(page){
  if(page==='reading')Promise.resolve().then(()=>window.sefazOpenReading?.()).catch(console.warn);
  if(page==='feed'){
   try{
+   target.classList.remove('hidden');
+   target.style.display='block';
    if(typeof window.render==='function'){
-    if(!target.querySelector('.q') || !target.querySelector('.q[data-id]'))window.render();
+    if(!target.querySelector('.q'))window.render();
    }
-   if(!target.children.length){
-    const notice=document.createElement('div');
-    notice.className='card';notice.setAttribute('role','status');
-    notice.textContent='Carregando Shorts e questões…';
-    notice.style.marginTop='100px';target.appendChild(notice);
-    Promise.resolve().then(()=>{if(typeof window.init==='function')return window.init()}).catch(err=>{notice.textContent='Falha ao carregar Shorts. Atualize a página.';console.warn(err)});
+   if(!target.querySelector('.q')){
+    const notice=document.createElement('article');notice.className='q';
+    notice.innerHTML='<h2>Carregando Shorts…</h2><p>Aguarde o banco de questões.</p>';
+    target.replaceChildren(notice);
+    if(typeof window.init==='function')Promise.resolve().then(()=>window.init()).catch(err=>{notice.querySelector('p').textContent='Falha ao carregar questões. Atualize a página.';console.warn(err)});
    }
   }catch(err){console.warn('Falha na aba Shorts',err)}
  }
