@@ -8,7 +8,7 @@ function sheet(){if(!ctx)return;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.f
 function drawStroke(s){if(!s.points||!s.points.length)return;ctx.save();ctx.strokeStyle=s.erase?'#ffffff':s.color;ctx.lineWidth=s.width*(s.erase?13:1);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(s.points[0][0],s.points[0][1]);if(s.points.length===1){ctx.lineTo(s.points[0][0]+.01,s.points[0][1]+.01)}else s.points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.stroke();ctx.restore()}
 function render(){sheet();strokes.forEach(drawStroke);if(active)drawStroke(active)}
 function persist(){try{localStorage.setItem(key(),JSON.stringify(strokes));status('Salvo automaticamente.')}catch(e){status('Armazenamento cheio. Exporte a folha em PNG.')}}function status(t){var e=document.getElementById('discSheetStatus');if(e)e.textContent=t}
-function refresh(){if(!setup())return;var id=current();if(id!==loaded){loaded=id;try{var raw=JSON.parse(localStorage.getItem(key())||'[]');strokes=Array.isArray(raw)?raw:[]}catch(e){strokes=[]}redo=[]}render()}
+function refresh(){if(!setup())return;var id=current();if(id!==loaded){loaded=id;try{var raw=JSON.parse(localStorage.getItem(key())||'[]');strokes=Array.isArray(raw)?raw:[]}catch(e){strokes=[]}redo=[]}render();updateSavedIndicator()}
 function point(e){var r=canvas.getBoundingClientRect();return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 /* A borracha remove somente traços escritos; o formulário é sempre redesenhado intacto. */
 function nearSegment(p,a,b,radius){var dx=b[0]-a[0],dy=b[1]-a[1],den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/den)):0;return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)<=radius}
@@ -22,7 +22,13 @@ window.discMode=function(mode){var h=document.getElementById('discHandwriting'),
 window.discTool=function(t){tool=t;if(canvas)canvas.style.touchAction=t==='scroll'?'pan-y':'none';status('Modo: '+(t==='pen'?'Caneta':t==='eraser'?'Borracha':'Rolar'))};
 window.discUndo=function(){if(strokes.length){redo.push(strokes.pop());render();persist()}};
 window.discRedo=function(){if(redo.length){strokes.push(redo.pop());render();persist()}};
-window.discSavePNG=function(){refresh();var a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='discursiva-tema-'+(current()+1)+'.png';a.click()};
+/* Salvar = manter a folha vinculada ao tema no próprio aplicativo; baixar é ação separada. */
+function savedSheetKey(){return 'sefaz-al-disc-sheet-saved-v1-'+current()}
+function updateSavedIndicator(){var el=document.getElementById('discSheetSavedIndicator');if(!el)return;try{var data=JSON.parse(localStorage.getItem(savedSheetKey())||'null');el.textContent=data?'Folha salva neste tema em '+new Date(data.savedAt).toLocaleString('pt-BR'):'Folha ainda não salva manualmente neste tema.'}catch(e){el.textContent='Folha ainda não salva manualmente neste tema.'}}
+window.discSavePNG=function(){refresh();if(!canvas){status('Folha indisponível.');return}try{persist();localStorage.setItem(savedSheetKey(),JSON.stringify({topic:current(),savedAt:new Date().toISOString(),format:'ink-strokes-v1'}));updateSavedIndicator();status('Folha salva no Tema '+(current()+1)+' dentro do aplicativo. Não é necessário baixar PNG.')}catch(e){status('Não foi possível salvar no aparelho: '+e.message)}};
+window.discDownloadPNG=function(){refresh();if(!canvas)return;try{canvas.toBlob(function(blob){if(!blob){status('Não foi possível gerar PNG.');return}var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='discursiva-tema-'+(current()+1)+'.png';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(url)},1500);status('Download do PNG solicitado.')},'image/png')}catch(e){status('Falha ao exportar PNG: '+e.message)}};
+window.discSheetSavedStatus=updateSavedIndicator;
+
 window.discPrint=function(){refresh();var image=canvas.toDataURL('image/png'),w=window.open('','_blank');if(!w){alert('Autorize a janela de impressão.');return}w.document.write('<html><head><title>Folha discursiva</title><style>body{margin:0}img{width:100%;max-height:100vh;object-fit:contain}@media print{@page{size:A4;margin:0}}</style></head><body><img src="'+image+'"><script>onload=function(){print()}<\/script></body></html>');w.document.close()};
 document.addEventListener('DOMContentLoaded',function(){if(!setup())return;canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);refresh()});
 })();
