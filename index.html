@@ -7,8 +7,6 @@
 /* Isolamento das telas: a classe hidden deve vencer qualquer regra de layout. */
 .app > main.hidden,.app > section.hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
-/* Leitura utiliza sua barra vertical nativa; ocultar somente a barra temporaria duplicada. */
-body.readingMode #tempInkToggle,body.readingMode #tempInkTools{display:none!important}
 </style><style id="sefaz-tablet-layout-v1">
 @media (min-width:850px) and (orientation:landscape){
 .app{max-width:none;width:100%;margin:0}
@@ -232,7 +230,6 @@ document.getElementById('tempInkClose').onclick=close;
 addEventListener('resize',()=>{if(target)resize()});
 window.addEventListener('sefaz:sync-ink',()=>{if(!target||!active)return;if(stroke)return;load();resize()});
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{close();if(target){canvas.remove();target=null;currentKey=''}}));
-document.addEventListener('sefaz:navigate',e=>{if(e.detail&&e.detail.page==='reading'){close();if(target){canvas.remove();target=null;currentKey=''}}});
 const observer=new MutationObserver(()=>{if(!target)return;if(!target.isConnected||target.classList.contains('hidden')||target.closest('.hidden')){close();canvas.remove();target=null;currentKey='';return}if(active&&document.getElementById('reading')&&!document.getElementById('reading').classList.contains('hidden')){const next=contentTarget();if(next&&next!==target)attach(next)}});
 observer.observe(document.querySelector('.app'),{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
