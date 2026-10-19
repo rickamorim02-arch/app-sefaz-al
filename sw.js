@@ -1,4 +1,4 @@
-const CACHE='sefaz-al-offline-v154';
+const CACHE='sefaz-al-offline-v155';
 const QUESTION_PARTS=['./questoes-originais-shorts-v46-parte-1.json','./questoes-originais-shorts-v46-parte-2.json','./questoes-originais-shorts-v46-parte-3.json'];
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./reading.js','./discursive-pen.js','./reading-pins.js','./ink-store.js','./reading-tools.js','./notes.js','./dictionary.js','./filter-visibility.js','./nav-layout.js','./offline.js','./study-tasks.js','./adaptive-study.js','./study-links.js','./study-integration.js','./pwa.js','./backup.js','./tablet.css','./full-backup.js','./reading-audio-cleanup.js'];
 const LARGE=new Set([...QUESTION_PARTS,'./reading-data.json']);
