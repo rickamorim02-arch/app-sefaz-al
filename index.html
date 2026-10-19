@@ -405,4 +405,39 @@ window.sefazNavigate=navigate;
  }
  clearDiscursiveRecords();
 })();
+</script><script id="sefaz-remove-duplicate-reading-rail-v1">
+/* Remove apenas a barra vertical duplicada da Leitura; preserva ferramentas temporarias. */
+(function(){
+ const selectors=['button','[role="button"]'];
+ function inspect(){
+  if(!document.body.classList.contains('readingMode'))return;
+  const buttons=[...document.querySelectorAll(selectors.join(','))];
+  const candidates=buttons.filter(el=>{
+   const rect=el.getBoundingClientRect();
+   return rect.width>25&&rect.width<110&&rect.height>25&&rect.height<110&&rect.left>innerWidth-125&&rect.top>innerHeight*.15&&rect.bottom<innerHeight-70;
+  });
+  for(const el of candidates){
+   let parent=el.parentElement;
+   for(let depth=0;parent&&depth<3;depth++,parent=parent.parentElement){
+    if(parent.id==='tempInkTools'||parent.closest('#tempInkTools,nav,#readingPinDialog'))break;
+    const children=[...parent.querySelectorAll('button,[role="button"]')];
+    if(children.length<5||children.length>8)continue;
+    const rect=parent.getBoundingClientRect();
+    if(rect.left<innerWidth-135||rect.width>125||rect.height<220)continue;
+    const labels=children.map(b=>(b.textContent||'')+' '+(b.getAttribute('aria-label')||'')+' '+(b.title||'')).join(' ').toLowerCase();
+    if(!/✏|🖊|🖍|caneta|lápis|lapis/.test(labels))continue;
+    if(!/🧽|borracha|apagar|eraser/.test(labels))continue;
+    parent.style.setProperty('display','none','important');
+    parent.setAttribute('data-sefaz-duplicate-reading-rail','hidden');
+    break;
+   }
+  }
+ }
+ let queued=false;
+ function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;inspect()})}
+ document.addEventListener('sefaz:navigate',schedule);
+ new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+ window.addEventListener('resize',schedule);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
+})();
 </script><script src="./offline.js?v=150" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script></body></html>
