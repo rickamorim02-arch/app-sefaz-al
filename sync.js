@@ -57,10 +57,63 @@ async function recoverPassword(){
  }catch(e){status('Não foi possível solicitar a recuperação: '+e.message)}
  finally{if(button)button.disabled=false}
 }
+
+// A recuperação do Supabase volta ao aplicativo com credenciais temporárias no fragmento da URL.
+// Elas são consumidas apenas para trocar a senha; nunca são gravadas no armazenamento local.
+async function handlePasswordRecovery(){
+ const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+ const query=new URLSearchParams(location.search);
+ const type=hash.get('type')||query.get('type');
+ const error=hash.get('error_description')||query.get('error_description');
+ const access=hash.get('access_token');
+ const refreshToken=hash.get('refresh_token');
+ const tokenHash=query.get('token_hash')||hash.get('token_hash');
+ const code=query.get('code');
+ if(type!=='recovery'&&!error&&!tokenHash&&!code)return;
+ const clearLink=()=>{try{history.replaceState(null,'',location.pathname)}catch(_){}};
+ if(error){clearLink();status('Link de recuperação inválido ou expirado: '+error);return}
+ if(type!=='recovery'&&!tokenHash&&!code)return;
+ let recoveryToken=access;
+ try{
+  if(!recoveryToken&&tokenHash){
+   const data=await request(AUTH+'/verify',{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({token_hash:tokenHash,type:'recovery'})});
+   recoveryToken=data.access_token;
+  }else if(!recoveryToken&&code){
+   const data=await request(AUTH+'/token?grant_type=pkce',{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({auth_code:code,code_verifier:sessionStorage.getItem('sefaz-recovery-code-verifier')||''})});
+   recoveryToken=data.access_token;
+  }
+ }catch(e){clearLink();status('Não foi possível validar o link: '+e.message);return}
+ clearLink();
+ if(!recoveryToken){status('O link não contém autorização válida para trocar a senha. Solicite outro e-mail.');return}
+ const overlay=document.createElement('div');overlay.id='sefazRecoveryOverlay';
+ overlay.style.cssText='position:fixed;inset:0;background:#071326ee;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px';
+ const box=document.createElement('section');box.style.cssText='background:#142b47;color:white;padding:24px;border-radius:16px;width:100%;max-width:420px;box-shadow:0 10px 40px #0008';
+ const title=document.createElement('h2');title.textContent='Redefinir senha da sincronização';
+ const info=document.createElement('p');info.textContent='Crie uma nova senha com pelo menos 8 caracteres. Seus estudos e redações não serão apagados.';
+ const input=document.createElement('input');input.type='password';input.placeholder='Nova senha';input.autocomplete='new-password';input.style.cssText='width:100%;margin:8px 0;padding:12px;color:#111;background:#fff';
+ const confirm=document.createElement('input');confirm.type='password';confirm.placeholder='Repita a nova senha';confirm.autocomplete='new-password';confirm.style.cssText=input.style.cssText;
+ const feedback=document.createElement('p');feedback.setAttribute('role','status');
+ const save=document.createElement('button');save.type='button';save.textContent='Salvar nova senha';save.style.cssText='padding:12px;margin-top:10px';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Fechar';cancel.style.cssText='padding:12px;margin-left:8px';
+ cancel.onclick=()=>{overlay.remove();status('Redefinição cancelada. Você pode solicitar outro link de recuperação.')};
+ save.onclick=async()=>{
+  if(input.value.length<8){feedback.textContent='Use pelo menos 8 caracteres.';return}
+  if(input.value!==confirm.value){feedback.textContent='As senhas não coincidem.';return}
+  save.disabled=true;feedback.textContent='Salvando nova senha...';
+  try{
+   await request(AUTH+'/user',{method:'PUT',headers:headers(recoveryToken),body:JSON.stringify({password:input.value})});
+   input.value='';confirm.value='';feedback.textContent='Senha alterada com sucesso! Entre com seu e-mail e a nova senha na aba Mais → Sincronização.';
+   status('Senha redefinida. Entre com sua nova senha. Seus dados locais foram preservados.');
+   save.remove();cancel.textContent='Concluir';
+  }catch(e){feedback.textContent='Não foi possível alterar a senha: '+e.message}
+  finally{save.disabled=false}
+ };
+ box.append(title,info,input,confirm,save,cancel,feedback);overlay.appendChild(box);document.body.appendChild(overlay);input.focus();
+}
 function init(){const root=document.createElement('div');root.className='card';root.id='sefazSyncPanel';root.innerHTML='<h3>☁️ Sincronização privada</h3><p>Use a mesma conta no celular e no tablet. Os dados locais permanecem no aparelho.</p><div id="syncLogin"><input id="syncEmail" type="email" autocomplete="username" placeholder="E-mail" style="width:100%;margin-bottom:8px"><input id="syncPassword" type="password" autocomplete="current-password" placeholder="Senha" style="width:100%;margin-bottom:8px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="syncEnter" type="button">Entrar</button><button id="syncRegister" type="button">Criar conta</button><button id="syncRecover" type="button">Esqueci minha senha</button></div></div><div id="syncLogged" hidden><p id="syncUser"></p><button id="syncNow" type="button">Sincronizar agora</button> <button id="syncExit" type="button">Sair desta conta</button></div><p id="syncStatus" role="status">Desconectado. A sincronização é manual: entre e toque em Sincronizar agora.</p><small>Sincronização somente pelo botão Sincronizar agora. Transfere respostas, anotações de texto, aulas marcadas e tarefas. Não sincroniza áudios, desenhos da caneta nem marcações gráficas. Em alterações simultâneas, revise os registros antes de continuar.</small>';
 const more=el('more');if(!more)return;more.insertBefore(root,more.firstElementChild?.nextSibling||null);
 el('syncEnter').onclick=()=>login(false);el('syncRegister').onclick=()=>login(true);el('syncRecover').onclick=recoverPassword;el('syncNow').onclick=sync;el('syncExit').onclick=async()=>{const token=session?.access_token;session=null;localStorage.removeItem(SESSION_KEY);updateUI();status('Desconectado. Dados locais preservados.');if(token)fetch(AUTH+'/logout',{method:'POST',headers:headers(token)}).catch(()=>{})};
-session=parse(localStorage.getItem(SESSION_KEY),null);updateUI();if(session)status('Conectado. Sincronização manual: toque em Sincronizar agora quando desejar.');
+session=parse(localStorage.getItem(SESSION_KEY),null);updateUI();handlePasswordRecovery().catch(e=>status('Erro ao abrir recuperação: '+e.message));if(session)status('Conectado. Sincronização manual: toque em Sincronizar agora quando desejar.');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
