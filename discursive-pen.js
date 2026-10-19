@@ -1,0 +1,24 @@
+(function(){'use strict';
+var canvas,ctx,strokes=[],redo=[],tool='pen',active=null,loaded=-1,saveTimer;
+var W=800,H=1180,left=68,top=110,row=33;
+function current(){var e=document.getElementById('discSelect');return e?Number(e.value||0):0}
+function key(){return 'sefaz-al-disc-ink-v1-'+current()}
+function setup(){canvas=document.getElementById('discSheet');if(!canvas)return false;ctx=canvas.getContext('2d');return !!ctx}
+function sheet(){if(!ctx)return;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.fillStyle='#ececec';ctx.fillRect(0,0,W,top);ctx.strokeStyle='#444';ctx.lineWidth=1;ctx.strokeRect(20,20,760,110);ctx.fillStyle='#111';ctx.font='bold 22px sans-serif';ctx.fillText('FOLHA DE RESPOSTA — DISCURSIVA',35,52);ctx.font='17px sans-serif';ctx.fillText('Aula / Tema: '+(current()+1),35,84);ctx.fillText('Tempo utilizado: _______',490,84);ctx.fillText('Linha',23,121);ctx.strokeStyle='#777';for(var i=0;i<30;i++){var y=top+20+(i+1)*row;if((i+1)%5===0){ctx.fillStyle='#eee';ctx.fillRect(20,y-row,48,row)}ctx.strokeStyle='#aaa';ctx.beginPath();ctx.moveTo(20,y);ctx.lineTo(780,y);ctx.stroke();ctx.fillStyle='#222';ctx.font='bold 15px sans-serif';ctx.fillText(String(i+1),35,y-10)}ctx.strokeStyle='#777';ctx.strokeRect(20,top+20,760,990);ctx.beginPath();ctx.moveTo(left,top+20);ctx.lineTo(left,top+1010);ctx.stroke()}
+function drawStroke(s){if(!s.points||!s.points.length)return;ctx.save();ctx.strokeStyle=s.erase?'#ffffff':s.color;ctx.lineWidth=s.width*(s.erase?13:1);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(s.points[0][0],s.points[0][1]);if(s.points.length===1){ctx.lineTo(s.points[0][0]+.01,s.points[0][1]+.01)}else s.points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.stroke();ctx.restore()}
+function render(){sheet();strokes.forEach(drawStroke);if(active)drawStroke(active)}
+function persist(){try{localStorage.setItem(key(),JSON.stringify(strokes));status('Salvo automaticamente.')}catch(e){status('Armazenamento cheio. Exporte a folha em PNG.')}}function status(t){var e=document.getElementById('discSheetStatus');if(e)e.textContent=t}
+function refresh(){if(!setup())return;var id=current();if(id!==loaded){loaded=id;try{var raw=JSON.parse(localStorage.getItem(key())||'[]');strokes=Array.isArray(raw)?raw:[]}catch(e){strokes=[]}redo=[]}render()}
+function point(e){var r=canvas.getBoundingClientRect();return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+function down(e){if(tool==='scroll')return;if(e.pointerType==='touch'&&e.width>25)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);active={color:document.getElementById('discInkColor').value,width:Number(document.getElementById('discInkWidth').value)||2,erase:tool==='eraser',points:[point(e)]};render()}
+function move(e){if(!active)return;e.preventDefault();active.points.push(point(e));render()}
+function up(e){if(!active)return;active.points.push(point(e));strokes.push(active);active=null;redo=[];render();clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}
+window.discSheetRefresh=refresh;
+window.discMode=function(mode){var h=document.getElementById('discHandwriting'),t=document.getElementById('discText');h.style.display=mode==='pen'?'block':'none';t.style.display=mode==='pen'?'none':'block';if(mode==='pen')refresh()};
+window.discTool=function(t){tool=t;if(canvas)canvas.style.touchAction=t==='scroll'?'pan-y':'none';status('Modo: '+(t==='pen'?'Caneta':t==='eraser'?'Borracha':'Rolar'))};
+window.discUndo=function(){if(strokes.length){redo.push(strokes.pop());render();persist()}};
+window.discRedo=function(){if(redo.length){strokes.push(redo.pop());render();persist()}};
+window.discSavePNG=function(){refresh();var a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='discursiva-tema-'+(current()+1)+'.png';a.click()};
+window.discPrint=function(){refresh();var image=canvas.toDataURL('image/png'),w=window.open('','_blank');if(!w){alert('Autorize a janela de impressão.');return}w.document.write('<html><head><title>Folha discursiva</title><style>body{margin:0}img{width:100%;max-height:100vh;object-fit:contain}@media print{@page{size:A4;margin:0}}</style></head><body><img src="'+image+'"><script>onload=function(){print()}<\/script></body></html>');w.document.close()};
+document.addEventListener('DOMContentLoaded',function(){if(!setup())return;canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);refresh()});
+})();
