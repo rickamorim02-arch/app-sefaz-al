@@ -290,6 +290,7 @@ window.sefazNavigate=navigate;
 /* Avaliação multimodal: a imagem da folha vai para API segura, sem transcrição. */
 (function(){
  const configKey='sefaz-al-disc-ai-endpoint-v1';
+ const defaultEndpoint='https://sefaz-al-estudos-rickamorim02-arch.vercel.app/api/corrigir-discursiva';
  const endpointField=()=>document.getElementById('discAIEndpoint');
  const status=message=>{const el=document.getElementById('discTranscriptionStatus');if(el)el.textContent=message};
  const safeText=(el,txt)=>{const p=document.createElement('p');p.textContent=String(txt||'');el.appendChild(p)};
@@ -298,11 +299,11 @@ window.sefazNavigate=navigate;
   if(!/^https:\/\/[^\s/]+\.[^\s/]+\//.test(value)){status('Informe uma URL HTTPS válida do serviço de correção.');return}
   localStorage.setItem(configKey,value);status('Endereço do serviço salvo neste aparelho.');
  };
- function init(){const input=endpointField();if(input)input.value=localStorage.getItem(configKey)||''}
+ function init(){const input=endpointField();if(input)input.value=localStorage.getItem(configKey)||defaultEndpoint}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
  window.discCorrectHandwriting=async function(){
   const button=document.getElementById('discAIButton'),result=document.getElementById('discAIResult'),canvas=document.getElementById('discSheet');
-  const endpoint=(endpointField()?.value||localStorage.getItem(configKey)||'').trim();
+  const endpoint=(endpointField()?.value||localStorage.getItem(configKey)||defaultEndpoint).trim();
   if(!/^https:\/\//.test(endpoint)){status('Falta configurar o endereço HTTPS do servidor de IA. A folha continua salva neste aparelho.');endpointField()?.focus();return}
   if(!canvas){status('A folha não está disponível. Abra Caneta novamente.');return}
   const index=Number(document.getElementById('discSelect')?.value||0),item=typeof D!=='undefined'?D[index]:null;
