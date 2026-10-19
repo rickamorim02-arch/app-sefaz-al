@@ -264,7 +264,20 @@ function navigate(page){
  const order=document.getElementById('shortsOrderControl');if(order)order.style.display=page==='feed'?'flex':'none';
  try{document.dispatchEvent(new CustomEvent('sefaz:navigate',{detail:{page}}))}catch(e){}
  if(page==='reading')Promise.resolve().then(()=>window.sefazOpenReading?.()).catch(console.warn);
- if(page==='feed')try{if(typeof window.render==='function'&&!target.children.length)window.render()}catch(e){console.warn(e)}
+ if(page==='feed'){
+  try{
+   if(typeof window.render==='function'){
+    if(!target.querySelector('.q') || !target.querySelector('.q[data-id]'))window.render();
+   }
+   if(!target.children.length){
+    const notice=document.createElement('div');
+    notice.className='card';notice.setAttribute('role','status');
+    notice.textContent='Carregando Shorts e questões…';
+    notice.style.marginTop='100px';target.appendChild(notice);
+    Promise.resolve().then(()=>{if(typeof window.init==='function')return window.init()}).catch(err=>{notice.textContent='Falha ao carregar Shorts. Atualize a página.';console.warn(err)});
+   }
+  }catch(err){console.warn('Falha na aba Shorts',err)}
+ }
  if(page==='disc')try{window.loadDisc?.();window.discLineCount?.();window.discHistoryRender?.()}catch(e){console.warn(e)}
  if(page==='more')try{window.more?.()}catch(e){console.warn(e)}
 }
