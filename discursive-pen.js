@@ -18,7 +18,7 @@ function down(e){if(tool==='scroll')return;if(e.pointerType==='touch'&&e.width>2
 function move(e){if(erasing){e.preventDefault();eraseChanged=eraseAt(point(e))||eraseChanged;return}if(!active)return;e.preventDefault();active.points.push(point(e));render()}
 function up(e){if(erasing){erasing=false;if(eraseChanged){clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}eraseChanged=false;render();return}if(!active)return;active.points.push(point(e));strokes.push(active);active=null;redo=[];render();clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}
 window.discSheetRefresh=refresh;
-window.discMode=function(mode){var h=document.getElementById('discHandwriting'),t=document.getElementById('discText');h.style.display=mode==='pen'?'block':'none';t.style.display=mode==='pen'?'none':'block';if(mode==='pen')refresh()};
+window.discMode=function(mode){var h=document.getElementById('discHandwriting'),t=document.getElementById('discText');h.style.display=mode==='pen'?'block':'none';t.style.display=mode==='pen'?'none':'block';if(mode==='pen'){refresh();requestAnimationFrame(function(){window.discZoomRefresh?.()})}};
 window.discTool=function(t){tool=t;if(canvas)canvas.style.touchAction=t==='scroll'?'pan-y':'none';status('Modo: '+(t==='pen'?'Caneta':t==='eraser'?'Borracha':'Rolar'))};
 window.discUndo=function(){if(strokes.length){redo.push(strokes.pop());render();persist()}};
 window.discRedo=function(){if(redo.length){strokes.push(redo.pop());render();persist()}};
