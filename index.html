@@ -123,7 +123,7 @@ init();
 
 <script>
 /* v125 estabilidade: desativa worker antigo sem recarregar a pagina. */
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('PWA indisponível:',err)))}
+/* Registro do service worker centralizado em offline.js. */
 </script>
 
 <style>
