@@ -10,9 +10,13 @@ function render(){sheet();strokes.forEach(drawStroke);if(active)drawStroke(activ
 function persist(){try{localStorage.setItem(key(),JSON.stringify(strokes));status('Salvo automaticamente.')}catch(e){status('Armazenamento cheio. Exporte a folha em PNG.')}}function status(t){var e=document.getElementById('discSheetStatus');if(e)e.textContent=t}
 function refresh(){if(!setup())return;var id=current();if(id!==loaded){loaded=id;try{var raw=JSON.parse(localStorage.getItem(key())||'[]');strokes=Array.isArray(raw)?raw:[]}catch(e){strokes=[]}redo=[]}render()}
 function point(e){var r=canvas.getBoundingClientRect();return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
-function down(e){if(tool==='scroll')return;if(e.pointerType==='touch'&&e.width>25)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);active={color:document.getElementById('discInkColor').value,width:Number(document.getElementById('discInkWidth').value)||2,erase:tool==='eraser',points:[point(e)]};render()}
-function move(e){if(!active)return;e.preventDefault();active.points.push(point(e));render()}
-function up(e){if(!active)return;active.points.push(point(e));strokes.push(active);active=null;redo=[];render();clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}
+/* A borracha remove somente traços escritos; o formulário é sempre redesenhado intacto. */
+function nearSegment(p,a,b,radius){var dx=b[0]-a[0],dy=b[1]-a[1],den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/den)):0;return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)<=radius}
+function eraseAt(p){var before=strokes.length;strokes=strokes.filter(function(s){if(!s.points||!s.points.length)return true;var radius=12+Number(s.width||2)/2;for(var i=0;i<s.points.length;i++){if(nearSegment(p,s.points[Math.max(0,i-1)],s.points[i],radius))return false}return true});if(strokes.length!==before){redo=[];render();return true}return false}
+var erasing=false,eraseChanged=false;
+function down(e){if(tool==='scroll')return;if(e.pointerType==='touch'&&e.width>25)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);if(tool==='eraser'){erasing=true;eraseChanged=eraseAt(point(e));active=null;return}active={color:document.getElementById('discInkColor').value,width:Number(document.getElementById('discInkWidth').value)||2,erase:false,points:[point(e)]};render()}
+function move(e){if(erasing){e.preventDefault();eraseChanged=eraseAt(point(e))||eraseChanged;return}if(!active)return;e.preventDefault();active.points.push(point(e));render()}
+function up(e){if(erasing){erasing=false;if(eraseChanged){clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}eraseChanged=false;render();return}if(!active)return;active.points.push(point(e));strokes.push(active);active=null;redo=[];render();clearTimeout(saveTimer);saveTimer=setTimeout(persist,100)}
 window.discSheetRefresh=refresh;
 window.discMode=function(mode){var h=document.getElementById('discHandwriting'),t=document.getElementById('discText');h.style.display=mode==='pen'?'block':'none';t.style.display=mode==='pen'?'none':'block';if(mode==='pen')refresh()};
 window.discTool=function(t){tool=t;if(canvas)canvas.style.touchAction=t==='scroll'?'pan-y':'none';status('Modo: '+(t==='pen'?'Caneta':t==='eraser'?'Borracha':'Rolar'))};
