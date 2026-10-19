@@ -373,7 +373,7 @@ window.sefazNavigate=navigate;
   canvas.style.height='auto';
   if(label)label.textContent=sizes[index]+'%';
  }
- window.discZoom=function(delta){index=delta===0?0:Math.max(0,Math.min(sizes.length-1,index+(delta>0?1:-1)));apply()};
+ window.discZoom=function(delta){index=delta===0?0:Math.max(0,Math.min(sizes.length-1,index+(delta>0?1:-1)));apply()};window.discZoomRefresh=apply;
  window.addEventListener('resize',apply);
  document.addEventListener('sefaz:navigate',e=>{if(e.detail?.page==='disc')requestAnimationFrame(apply)});
  document.addEventListener('DOMContentLoaded',apply);
