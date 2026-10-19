@@ -48,7 +48,7 @@ catch(e){console.error('Sincronização falhou em '+phase,e);status('Sincroniza�
 async function login(signup){const email=el('syncEmail').value.trim(),password=el('syncPassword').value;if(!email||!password){status('Informe e-mail e senha.');return}status('Conectando...');try{const data=await request(AUTH+(signup?'/signup':'/token?grant_type=password'),{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!data.access_token){status('Conta criada. Confirme o e-mail recebido e depois entre.');return}session={...data,expires_at:Math.floor(Date.now()/1000)+data.expires_in};localStorage.setItem(SESSION_KEY,JSON.stringify(session));el('syncPassword').value='';updateUI();status('Conectado. Toque em Sincronizar agora para transferir os registros.')}catch(e){status(e.message)}}
 async function recoverPassword(){
  const email=el('syncEmail')?.value.trim();
- if(!email||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status('Informe o e-mail cadastrado para recuperar a senha.');el('syncEmail')?.focus();return}
+ if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status('Informe o e-mail cadastrado para recuperar a senha.');el('syncEmail')?.focus();return}
  const button=el('syncRecover');if(button)button.disabled=true;
  status('Solicitando e-mail de recuperação...');
  try{
