@@ -379,4 +379,21 @@ window.sefazNavigate=navigate;
  document.addEventListener('DOMContentLoaded',apply);
 })();
 </script><script src="./discursive-pen.js?v=6" defer></script><script src="./reading.js?v=78" defer></script><script src="./reading-pins.js?v=5" defer></script>
-<script src="./offline.js?v=150" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script></body></html>
+<script>
+(function(){
+ const FLAG='sefaz-al-disc-records-cleared-2026-10-19';
+ function clearDiscursiveRecords(){
+  try{
+   if(localStorage.getItem(FLAG)==='1')return;
+   const exact=new Set(['sefaz-al-disc','sefaz-al-disc-evaluations-v1','sefaz-al-disc-random-v1']);
+   const prefixes=['sefaz-al-disc-ink-v1-','sefaz-al-disc-sheet-saved-v1-'];
+   const keys=[];
+   for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key&&(exact.has(key)||prefixes.some(prefix=>key.startsWith(prefix))))keys.push(key)}
+   keys.forEach(key=>localStorage.removeItem(key));
+   localStorage.setItem(FLAG,'1');
+   console.info('Registros pessoais de Discursivas removidos deste aparelho:',keys.length);
+  }catch(e){console.warn('Não foi possível limpar todos os registros locais de Discursivas:',e)}
+ }
+ clearDiscursiveRecords();
+})();
+</script><script src="./offline.js?v=150" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script></body></html>
