@@ -415,39 +415,43 @@ window.sefazNavigate=navigate;
  }
  clearDiscursiveRecords();
 })();
-</script><script id="sefaz-remove-duplicate-reading-rail-v1">
-/* Remove apenas a barra vertical duplicada da Leitura; preserva ferramentas temporarias. */
-(function(){
- const selectors=['button','[role="button"]'];
- function inspect(){
-  if(!document.body.classList.contains('readingMode'))return;
-  const buttons=[...document.querySelectorAll(selectors.join(','))];
-  const candidates=buttons.filter(el=>{
-   const rect=el.getBoundingClientRect();
-   return rect.width>25&&rect.width<110&&rect.height>25&&rect.height<110&&rect.left>innerWidth-125&&rect.top>innerHeight*.15&&rect.bottom<innerHeight-70;
-  });
-  for(const el of candidates){
-   let parent=el.parentElement;
-   for(let depth=0;parent&&depth<3;depth++,parent=parent.parentElement){
-    if(parent.id==='tempInkTools'||parent.closest('#tempInkTools,nav,#readingPinDialog'))break;
-    const children=[...parent.querySelectorAll('button,[role="button"]')];
-    if(children.length<5||children.length>8)continue;
-    const rect=parent.getBoundingClientRect();
-    if(rect.left<innerWidth-135||rect.width>125||rect.height<220)continue;
-    const labels=children.map(b=>(b.textContent||'')+' '+(b.getAttribute('aria-label')||'')+' '+(b.title||'')).join(' ').toLowerCase();
-    if(!/✏|🖊|🖍|caneta|lápis|lapis/.test(labels))continue;
-    if(!/🧽|borracha|apagar|eraser/.test(labels))continue;
-    parent.style.setProperty('display','none','important');
-    parent.setAttribute('data-sefaz-duplicate-reading-rail','hidden');
-    break;
-   }
+</script><style id="sefaz-tablet-nav-v2">
+/* Navegacao ampla e legivel, com espaco proprio para os controles flutuantes. */
+.app>nav{left:50%;transform:translateX(-50%);width:min(100%,100vw)!important;max-width:none!important;box-sizing:border-box;display:flex;justify-content:space-evenly;align-items:center;gap:6px;padding:9px max(10px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));min-height:68px;z-index:1000}
+.app>nav button{flex:1 1 0;min-width:0;min-height:48px;padding:7px 6px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:clamp(12px,1.1vw,16px)!important;line-height:1.2}
+.app>nav button span:first-child{font-size:clamp(18px,1.6vw,23px);line-height:1.1}
+#tempInkToggle{bottom:calc(79px + env(safe-area-inset-bottom))!important}
+#tempInkTools{bottom:calc(131px + env(safe-area-inset-bottom))!important}
+@media(min-width:700px){.app>nav{padding-left:clamp(18px,3vw,50px);padding-right:clamp(18px,3vw,50px)}.app>nav button{font-size:15px!important;min-height:53px}}
+</style>
+<script id="sefaz-hide-duplicate-reading-rail-v2">
+/* Remove a barra vertical redundante, inclusive quando vem de componente com sombra ou posicao fora da borda. */
+(()=>{'use strict';let busy=false;
+function hide(){
+ if(!document.body.classList.contains('readingMode'))return;
+ const labels=['ler','marcar','caneta','apagar','anotar','limpar'];
+ for(const el of document.querySelectorAll('button,[role="button"]')){
+  if(el.closest('#tempInkTools,#tempInkToggle,nav,#voiceRecordFloat'))continue;
+  const label=((el.textContent||'')+' '+(el.getAttribute('aria-label')||'')+' '+(el.title||'')).toLowerCase().trim();
+  if(!labels.some(x=>label.includes(x)))continue;
+  let node=el.parentElement;
+  for(let depth=0;node&&depth<5;depth++,node=node.parentElement){
+   if(node.matches('body,.app,#reading,#readingBody,section,main,nav'))break;
+   if(node.closest('#tempInkTools,nav,#readingPinDialog'))break;
+   const rect=node.getBoundingClientRect();
+   if(rect.width>155||rect.height<180||rect.height>650)continue;
+   const bs=[...node.querySelectorAll('button,[role="button"]')];
+   if(bs.length<5||bs.length>9)continue;
+   const names=bs.map(b=>((b.textContent||'')+' '+(b.getAttribute('aria-label')||'')).toLowerCase()).join(' ');
+   if(!labels.every(x=>names.includes(x)))continue;
+   if(rect.left<innerWidth*.68)continue;
+   node.style.setProperty('display','none','important');node.setAttribute('data-sefaz-duplicate-reading-rail','hidden');break;
   }
  }
- let queued=false;
- function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;inspect()})}
- document.addEventListener('sefaz:navigate',schedule);
- new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
- window.addEventListener('resize',schedule);
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
+}
+function schedule(){if(busy)return;busy=true;requestAnimationFrame(()=>{busy=false;hide()})}
+document.addEventListener('sefaz:navigate',schedule);window.addEventListener('resize',schedule);
+new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
 })();
 </script><script src="./offline.js?v=150" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script><script src="./voice-library.js?v=3" defer></script></body></html>
