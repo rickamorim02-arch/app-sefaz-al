@@ -470,4 +470,20 @@ document.addEventListener('sefaz:navigate',schedule);window.addEventListener('re
 new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
 })();
-</script><script src="./offline.js?v=151" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script><script src="./reading-audio-attachments.js?v=2" defer></script><script src="./voice-library.js?v=4" defer></script><script src="./reading-geometry.js?v=4" defer></script><script src="./reading-notes-hub.js?v=2" defer></script><script src="./velunara.js?v=3" defer></script></body></html>
+</script><script src="./offline.js?v=151" defer></script><script src="./study-tasks.js?v=3"></script><script src="./full-backup.js?v=2" defer></script><script src="./reading-audio-cleanup.js?v=1" defer></script><script src="./reading-audio-attachments.js?v=2" defer></script><script src="./voice-library.js?v=4" defer></script><script src="./reading-geometry.js?v=4" defer></script><script src="./reading-notes-hub.js?v=2" defer></script><script src="./velunara.js?v=3" defer></script><script id="sefaz-more-deduplicate-v1">
+(()=>{'use strict';
+function clean(){
+ const root=document.getElementById('more');if(!root)return;
+ const cards=[...root.querySelectorAll('.card')];const seen=new Set();
+ for(const card of cards){
+   const title=(card.querySelector('h3')?.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+   let kind=title.includes('instalar aplicativo')?'install':title.includes('desempenho')?'performance':title.includes('materias')?'subjects':'';
+   if(!kind)continue;
+   if(kind==='performance'||kind==='subjects'||seen.has(kind)){card.remove();continue}
+   seen.add(kind);
+ }
+}
+let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;clean()})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})});else{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})}
+})();
+</script></body></html>
