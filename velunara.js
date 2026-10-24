@@ -11,7 +11,7 @@ function progress(i){let v=state()[i]||{};return {shorts:v.shorts||0,boxes:v.box
 function react(){let e=document.querySelector('#vel-floating .vel-card');if(!e)return;e.classList.remove('vel-reaction');void e.offsetWidth;e.classList.add('vel-reaction');setTimeout(()=>e.classList.remove('vel-reaction'),1200)}
 function record(i,kind,id){if(i<0||!id)return;let all=state(),v=all[i]||{shorts:0,boxes:0,lessons:0,seen:{}};v.seen=v.seen||{};let k=kind+':'+id;if(v.seen[k])return;v.seen[k]=1;v[kind]=(v[kind]||0)+1;all[i]=v;store(all);draw();react()}
 function level(p){return Math.min(5,1+Math.floor(p.energy/100))}
-function portrait(i){const x=i%5,y=Math.floor(i/5);return '<span class="vel-portrait vel-photo" role="img" aria-label="Retrato de '+names[i]+'" style="background-image:url(./guardias-velunara.jpg);background-size:500% 400%;background-position:'+(x*25)+'% '+(y*100/3)+'%"><span class="vel-eye-glint" aria-hidden="true"></span></span>'}
+function portrait(i){const x=i%5,y=Math.floor(i/5);return '<span class="vel-portrait vel-photo" role="img" aria-label="Retrato de '+names[i]+'" style="background-image:url(./guardias-velunara.jpg);background-size:500% 400%;background-position:'+(x*25)+'% '+(y*100/3)+'%"><span class="vel-eye-glint" aria-hidden="true"></span><span class="vel-aura" aria-hidden="true">✧</span></span>'}
 function card(i,large=false){let p=progress(i),l=level(p);return '<div class="vel-card '+(large?'vel-large':'')+'">'+portrait(i)+'<div class="vel-detail"><strong>'+names[i]+'</strong><small>Nível '+l+' · '+p.energy+' energias</small><div class="vel-meter"><i style="width:'+Math.min(100,p.energy%100)+'%;background:'+palette[i]+'"></i></div>'+(large?'<small>'+p.shorts+' Shorts · '+p.boxes+' caixas · '+p.lessons+' aulas</small>':'')+'</div></div>'}
 function active(){let reading=document.getElementById('reading'),feed=document.getElementById('feed');if(reading&&!reading.classList.contains('hidden'))return 'reading';if(feed&&!feed.classList.contains('hidden'))return 'feed';return ''}
 function detect(){let a=active();if(a==='feed'){let q=document.querySelector('#feed .q:not([style*="display: none"])');let nodes=[...document.querySelectorAll('#feed .q')];q=nodes.find(e=>{let r=e.getBoundingClientRect();return r.top<innerHeight*.65&&r.bottom>innerHeight*.35})||q;return subjectIndex(q?.querySelector('.tag,.topic')?.textContent||q?.textContent.slice(0,180))}if(a==='reading'){let el=document.querySelector('#readingBody');return subjectIndex((el?.querySelector('h1,h2,h3')?.textContent||'')+' '+(el?.textContent||'').slice(0,220))}return -1}
@@ -56,6 +56,16 @@ let css=document.createElement('style');css.textContent=`
 @keyframes vel-react{0%,100%{box-shadow:none}40%{box-shadow:0 0 22px #ffb5d6a6}}
 @keyframes vel-spark{0%{opacity:0;transform:translateY(12px) scale(.7)}35%{opacity:1}100%{opacity:0;transform:translateY(-35px) scale(1.2)}}
 @media(prefers-reduced-motion:reduce){#vel-floating .vel-photo,.vel-large .vel-photo,.vel-photo:after,.vel-card.vel-reaction,.vel-card.vel-reaction:before{animation:none!important}}
+
+/* V4: visible living-portrait motion, preserving the user's original photographs */
+#vel-floating .vel-photo{animation:vel-living 3.6s ease-in-out infinite!important;box-shadow:0 0 12px #efb0c088,0 0 24px #c789bb55!important}
+#vel-garden .vel-photo{animation:vel-living 4.5s ease-in-out infinite!important;box-shadow:0 0 8px #e6a9c077!important}
+#vel-garden .vel-card:nth-child(2n) .vel-photo{animation-delay:-1.6s!important}
+#vel-garden .vel-card:nth-child(3n) .vel-photo{animation-delay:-2.7s!important}
+.vel-aura{position:absolute;right:2px;top:1px;color:#ffe4f4;font-size:17px;text-shadow:0 0 9px #f8a9d5;animation:vel-aura-move 2.9s ease-in-out infinite;pointer-events:none}
+@keyframes vel-living{0%,100%{transform:translateY(0) rotate(-2deg) scale(1);filter:brightness(1)}50%{transform:translateY(-4px) rotate(2deg) scale(1.075);filter:brightness(1.16)}}
+@keyframes vel-aura-move{0%,100%{opacity:.25;transform:translateY(4px) scale(.7)}50%{opacity:1;transform:translateY(-8px) scale(1.2)}}
+@media(prefers-reduced-motion:reduce){#vel-floating .vel-photo,#vel-garden .vel-photo,.vel-aura{animation:none!important}}
 `;document.head.appendChild(css);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe);else observe();
 })();
