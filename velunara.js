@@ -8,7 +8,8 @@ function subjectIndex(s){let n=normalize(s);if(!n)return -1;for(let i=0;i<alias.
 function state(){try{return JSON.parse(localStorage.getItem(key)||'{}')}catch{return {}}}
 function store(v){try{localStorage.setItem(key,JSON.stringify(v))}catch{}}
 function progress(i){let v=state()[i]||{};return {shorts:v.shorts||0,boxes:v.boxes||0,lessons:v.lessons||0,energy:(v.shorts||0)+10*(v.boxes||0)+20*(v.lessons||0)}}
-function record(i,kind,id){if(i<0||!id)return;let all=state(),v=all[i]||{shorts:0,boxes:0,lessons:0,seen:{}};v.seen=v.seen||{};let k=kind+':'+id;if(v.seen[k])return;v.seen[k]=1;v[kind]=(v[kind]||0)+1;all[i]=v;store(all);draw()}
+function react(){let e=document.querySelector('#vel-floating .vel-card');if(!e)return;e.classList.remove('vel-reaction');void e.offsetWidth;e.classList.add('vel-reaction');setTimeout(()=>e.classList.remove('vel-reaction'),1200)}
+function record(i,kind,id){if(i<0||!id)return;let all=state(),v=all[i]||{shorts:0,boxes:0,lessons:0,seen:{}};v.seen=v.seen||{};let k=kind+':'+id;if(v.seen[k])return;v.seen[k]=1;v[kind]=(v[kind]||0)+1;all[i]=v;store(all);draw();react()}
 function level(p){return Math.min(5,1+Math.floor(p.energy/100))}
 function portrait(i){const x=i%5,y=Math.floor(i/5);return '<span class="vel-portrait vel-photo" role="img" aria-label="Retrato de '+names[i]+'" style="background-image:url(./guardias-velunara.jpg);background-size:500% 400%;background-position:'+(x*25)+'% '+(y*100/3)+'%"></span>'}
 function card(i,large=false){let p=progress(i),l=level(p);return '<div class="vel-card '+(large?'vel-large':'')+'">'+portrait(i)+'<div class="vel-detail"><strong>'+names[i]+'</strong><small>Nível '+l+' · '+p.energy+' energias</small><div class="vel-meter"><i style="width:'+Math.min(100,p.energy%100)+'%;background:'+palette[i]+'"></i></div>'+(large?'<small>'+p.shorts+' Shorts · '+p.boxes+' caixas · '+p.lessons+' aulas</small>':'')+'</div></div>'}
@@ -31,6 +32,23 @@ let css=document.createElement('style');css.textContent=`
 .vel-photo{background-repeat:no-repeat;background-color:#132940;border:1px solid #c9a35a;background-origin:border-box;box-shadow:0 0 7px #a9824c77}
 .vel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px}.vel-large .vel-portrait{width:54px;height:70px}.vel-large .vel-detail strong{font-size:14px}.vel-large .vel-detail small{font-size:11px}
 @media(max-width:480px){#vel-floating{top:72px;right:6px;width:112px}#vel-floating .vel-portrait{width:32px;height:44px}#vel-floating .vel-detail strong{font-size:10px}}
+
+/* Velunara V2: sensualidade sofisticada, movimentos leves e sem alterar as fotos */
+#vel-floating .vel-photo{transform-origin:50% 88%;animation:vel-breathe 5.8s ease-in-out infinite,vel-sway 11s ease-in-out infinite;will-change:transform}
+.vel-large .vel-photo{transform-origin:50% 90%;animation:vel-breathe 6.2s ease-in-out infinite}
+.vel-photo{isolation:isolate;transition:filter .5s ease,box-shadow .5s ease}
+.vel-photo:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 28%,rgba(255,224,191,.17) 47%,transparent 65%);background-size:260% 100%;background-position:120% 0;animation:vel-glimmer 9s ease-in-out infinite;border-radius:inherit}
+.vel-card{position:relative;overflow:hidden;transition:border-color .35s ease,box-shadow .35s ease}
+.vel-card:hover{border-color:#d9a5a4;box-shadow:0 0 13px #bd718a55}
+.vel-card.vel-reaction{animation:vel-react .85s ease-out}
+.vel-card.vel-reaction .vel-photo{filter:brightness(1.24) saturate(1.18)}
+.vel-card.vel-reaction:before{content:'✦  ♡  ✧';position:absolute;inset:0;display:flex;justify-content:center;align-items:flex-start;padding-top:3px;z-index:4;color:#ffd8db;font-size:18px;text-shadow:0 0 8px #f3b5cd;pointer-events:none;animation:vel-spark 1.1s ease-out forwards}
+@keyframes vel-breathe{0%,100%{transform:scale(1) rotate(-.6deg)}50%{transform:scale(1.028) rotate(.6deg)}}
+@keyframes vel-sway{0%,100%{filter:brightness(1)}50%{filter:brightness(1.07)}}
+@keyframes vel-glimmer{0%,66%,100%{background-position:120% 0}83%{background-position:-120% 0}}
+@keyframes vel-react{0%,100%{box-shadow:none}40%{box-shadow:0 0 22px #ffb5d6a6}}
+@keyframes vel-spark{0%{opacity:0;transform:translateY(12px) scale(.7)}35%{opacity:1}100%{opacity:0;transform:translateY(-35px) scale(1.2)}}
+@media(prefers-reduced-motion:reduce){#vel-floating .vel-photo,.vel-large .vel-photo,.vel-photo:after,.vel-card.vel-reaction,.vel-card.vel-reaction:before{animation:none!important}}
 `;document.head.appendChild(css);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe);else observe();
 })();
