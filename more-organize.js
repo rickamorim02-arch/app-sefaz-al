@@ -1,0 +1,10 @@
+(()=>{'use strict';
+function organize(){const root=document.getElementById('more');if(!root)return;
+const heading=root.querySelector(':scope > h2');if(!heading)return;
+const categories=[['study','📚 Estudos e matérias'],['notes','📝 Leitura e anotações'],['tools','🛠️ Ferramentas'],['settings','⚙️ Aplicativo e dados']];
+const sections={};for(const [key,title] of categories){let section=root.querySelector('[data-more-group="'+key+'"]');if(!section){section=document.createElement('section');section.dataset.moreGroup=key;section.style.cssText='margin:14px 0 20px';const h=document.createElement('h3');h.textContent=title;h.style.cssText='margin:12px 0;color:#ffd34e;font-size:1.12rem';section.append(h)}sections[key]=section}
+const cards=[...root.querySelectorAll('.card')].filter(c=>!c.closest('[data-more-group]'));for(const card of cards){const title=(card.querySelector('h3,summary,b')?.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const id=card.id||'';let group='tools';if(id==='moreSubjectsShortcut'||/treino discursivo|relatorio de erros|desempenho/.test(title))group='study';else if(/anotac|marcac|leitura/.test(title)||id==='readingNotesHub')group='notes';else if(/instalar|offline|backup|audios|audio|mascote|sefaz-al 2026/.test(title+id))group='settings';sections[group].append(card)}
+for(const [key] of categories)root.append(sections[key]);}
+function init(){organize();const root=document.getElementById('more');if(!root)return;let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;organize()})}).observe(root,{childList:true,subtree:false});document.addEventListener('sefaz:navigate',organize)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()
+})();
