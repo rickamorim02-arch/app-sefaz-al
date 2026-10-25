@@ -480,7 +480,7 @@ function clean(){
    const title=(card.querySelector('h3')?.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
    let kind=title.includes('instalar aplicativo')?'install':title.includes('desempenho')?'performance':title.includes('materias')?'subjects':'';
    if(!kind)continue;
-   if(kind==='performance'||kind==='subjects'||seen.has(kind)){card.remove();continue}
+   if(kind==='performance'||seen.has(kind)){card.remove();continue}
    seen.add(kind);
  }
 }
