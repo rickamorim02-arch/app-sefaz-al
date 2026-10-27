@@ -48,7 +48,13 @@ window.addEventListener('scroll',()=>{if(!currentLesson)return;clearTimeout(save
 document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberPosition()});
 window.addEventListener('pagehide',rememberPosition);
 
-function formatReadingText(value){return String(value||'').split(/(\r?\n)/).map(line=>/^(?:\s*)(?:\d+(?:\.\d+)*[.)]?|[IVXLCDM]+[.)])\s+\S/i.test(line)&&line.trim().length<=180?'<strong class="readingNumberedTitle">'+esc(line)+'</strong>':esc(line)).join('')}
+function formatReadingText(value){
+ const title=/^\s*(?:(?:\d{1,3}(?:\.\d{1,3}){0,6})\s*[.)\-–:]?\s+|(?:[IVXLCDM]{1,8})[.)]\s+|(?:CAP[IÍ]TULO|SE[CÇ][AÃ]O|T[OÓ]PICO)\s+\d+\b)/i;
+ return String(value||'').split(/(\r?\n)/).map(line=>{
+  const clean=line.trim();
+  return title.test(line)&&clean.length<=240?'<strong class="readingNumberedTitle">'+esc(line)+'</strong>':esc(line);
+ }).join('');
+}
 function show(x){const v=document.getElementById('readingBody');if(!v)return;if(currentLesson&&currentLesson!==lessonId(x))rememberPosition();currentLesson=lessonId(x);v.innerHTML='<div class="card"><small>'+esc(x.subject)+' • '+esc(x.lesson)+'</small><h2>'+esc(x.lesson)+'</h2><div class="readingSourceText">'+formatReadingText(x.text)+'</div></div>';localStorage.setItem('sefaz-reading-last-v2',JSON.stringify({subject:x.subject,lesson:x.lesson}));resumePosition(x)}
 async function restore(){if(!await load())return;try{let p=JSON.parse(localStorage.getItem('sefaz-reading-last-v2')||'null');if(p){let x=findReading(p);if(x)show(x)}}catch(e){}}
 function setReadingMode(on){if(!on)rememberPosition();document.body.classList.toggle('readingMode',!!on);document.getElementById('feedFilter')?.classList.toggle('hidden',!!on)}
