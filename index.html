@@ -288,7 +288,7 @@ card.append(title,info,body,edit,print,del);box.append(card)
 </script><script>
 /* Navegação independente: opera mesmo se módulos de estudo falharem. */
 (function(){
-const pages=new Set(['feed','reading','tasks','disc','more']);
+const pages=new Set(['feed','reading','original','tasks','disc','more']);
 function navigate(page){
  if(!pages.has(page))return;
  const target=document.getElementById(page);
