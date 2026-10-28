@@ -5,8 +5,19 @@ const slug=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const extra={'contabilidade-geral':[18],'direito-administrativo':[17],'reforma-ec-n-132-2023-e-lc-n-214-2025':[13,15,16]};
 const lessonNumber=x=>{const m=String(x||'').match(/\b(?:aula\s*)?(\d{1,3})\b/i);return m?Number(m[1]):null};
 const nativeUrl=(subject,lesson)=>{const n=lessonNumber(lesson);return n===null?null:'./original-pdfs/'+slug(subject)+'/aula-'+String(n).padStart(2,'0')+'.pdf'};
-function nativePdf(subject,lesson){const url=nativeUrl(subject,lesson);if(!url)return;const box=$('originalViewer');box.replaceChildren();const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent='Abrir PDF original';const frame=document.createElement('iframe');frame.src=url;frame.title=subject+' • '+lesson;frame.style.cssText='width:100%;height:70vh;border:1px solid #345;border-radius:10px';box.append(link,frame)}
-
+async function nativePdf(subject,lesson){
+ const url=nativeUrl(subject,lesson);if(!url)return;
+ const box=$('originalViewer');box.replaceChildren();
+ const status=document.createElement('p');status.textContent='Verificando PDF nativo...';box.append(status);
+ try{
+  const response=await fetch(url,{method:'HEAD',cache:'no-store'});
+  if(!response.ok||!String(response.headers.get('content-type')||'').toLowerCase().includes('pdf'))throw new Error('PDF ainda não publicado');
+  box.replaceChildren();
+  const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent='Abrir PDF original';
+  const frame=document.createElement('iframe');frame.src=url;frame.title=subject+' • '+lesson;frame.style.cssText='width:100%;height:70vh;border:1px solid #345;border-radius:10px';
+  box.append(link,frame);
+ }catch(e){status.textContent='O PDF desta aula ainda não foi publicado no aplicativo. Os arquivos locais salvos neste aparelho aparecem na lista abaixo.'}
+}
 function db(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'key'})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});return dbPromise}
 async function tx(mode,action){const d=await db();return new Promise((resolve,reject)=>{const t=d.transaction(STORE,mode),s=t.objectStore(STORE),r=action(s);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
 const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
