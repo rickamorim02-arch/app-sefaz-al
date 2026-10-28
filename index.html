@@ -486,4 +486,4 @@ function clean(){
 let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;clean()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})});else{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})}
 })();
-</script><script src="./original-pdfs.js?v=1" defer></script></body></html>
+</script><script src="./original-pdfs.js?v=2" defer></script></body></html>
