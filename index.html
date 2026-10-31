@@ -486,4 +486,4 @@ function clean(){
 let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;clean()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})});else{clean();new MutationObserver(schedule).observe(document.getElementById('more')||document.body,{childList:true,subtree:true})}
 })();
-</script></body></html>
+</script><style id="sefaz-disable-velunara">#vel-floating,#vel-garden,.vel-card,.vel-portrait,.vel-grid,.vel-photo{display:none!important;visibility:hidden!important}</style><script id="sefaz-remove-velunara">(()=>{function clean(){document.querySelectorAll('#vel-floating,#vel-garden').forEach(e=>e.remove())}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean);else clean();new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true})})();</script></body></html>
